@@ -4,7 +4,8 @@ from rest_framework import renderers
 from .shared import DownloadMixin
 
 from weasyprint import HTML
-import cStringIO
+# import cStringIO
+from io import StringIO as cStringIO
 
 
 class PDFRenderer(DownloadMixin, renderers.BaseRenderer):
@@ -17,11 +18,11 @@ class PDFRenderer(DownloadMixin, renderers.BaseRenderer):
         self.update_download_headers(renderer_context)
         template = loader.get_template('pdf/pdf.html')
 
-        context = {
+        context = Context({
             "data": data,
             "title": self.fname.split('.')[0],
 
-        }
+        })
 
         mem_file = cStringIO.StringIO()
 

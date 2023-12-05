@@ -7,7 +7,7 @@ BASE_DIR = os.path.dirname(
 # Override in production via env
 
 env = environ.Env(
-    DATABASE_URL=(str, 'postgres://mfl:mfl@localhost:5433/mfl'),
+    DATABASE_URL=(str, 'postgres://dbuser:dbpass@localhost:5432/mfl'),
     DEBUG=(bool, True),
     FRONTEND_URL=(str, "http://localhost:8062"),
     REALTIME_INDEX=(bool, False),
@@ -23,14 +23,13 @@ env = environ.Env(
     ADMINS=(str, "admin:admin@example.com,"),
     SERVER_EMAIL=(str, "root@localhost"),
     ALLOWED_HOSTS=(str, "localhost"),
-    DHIS_ENDPOINT=(str, "https://test.hiskenya.org/"),
+    DHIS_ENDPOINT=(str, "https://hiskenya.org/"),
     DHIS_USERNAME=(str, 'kmhfl_integration'),
     DHIS_PASSWORD=(str, ''),
-    DHIS_CLIENT_ID=(str, '102'),
-    PUSH_TO_DHIS=(bool, True),
-    DHIS_CLIENT_SECRET=(str, '')
+    DHIS_CLIENT_ID=(str, 'KMHFL'),
+    DHIS_CLIENT_SECRET=(str, '65df9a025-31df-079d-14d5-a01e08ea947')
 )
-# env.read_env(os.path.join(BASE_DIR, '.env'))
+env.read_env(os.path.join(BASE_DIR, '.env'))
 
 ADMINS = tuple(
     tuple(name.split(':')) for name in env('ADMINS').split(',') if name != ''
@@ -44,11 +43,11 @@ ENV_DB = env.db()
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'HOST': '127.0.0.1',
-        'NAME': 'mfl',
-        'PASSWORD': 'mfl@pa55w0rd',
-        'PORT': '5433',
-        'USER': 'mfladmin',
+        'HOST': ENV_DB['HOST'],
+        'NAME': ENV_DB['NAME'],
+        'PASSWORD': ENV_DB['PASSWORD'],
+        'PORT': ENV_DB['PORT'],
+        'USER': ENV_DB['USER'],
     }
 }  # Env should have DATABASE_URL
 MIDDLEWARE = (
@@ -59,12 +58,13 @@ MIDDLEWARE = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'reversion.middleware.RevisionMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware'
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'allauth.account.middleware.AccountMiddleware'
 )
 
 EMAIL_HOST = env('EMAIL_HOST')
@@ -92,12 +92,14 @@ INSTALLED_APPS = (
     'oauth2_provider',
     'rest_framework',
     'rest_framework.authtoken',
-    'rest_auth',
+    # 'rest_auth',
+    'dj_rest_auth',
     'allauth',
     'allauth.account',
     'rest_auth.registration',
     'corsheaders',
-    'rest_framework_swagger',
+    #'rest_framework_swagger',
+    'drf_yasg',
     'django.contrib.gis',
     'reversion',
     'gunicorn',
@@ -167,7 +169,8 @@ REST_FRAMEWORK = {
         'users.permissions.MFLModelPermissions',
     ),
     'DEFAULT_FILTER_BACKENDS': (
-        'rest_framework.filters.DjangoFilterBackend',
+        # 'rest_framework.filters.DjangoFilterBackend',
+        'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.OrderingFilter',
     ),
     'DEFAULT_PARSER_CLASSES': (
@@ -185,7 +188,8 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'exception_handler.handler.custom_exception_handler',
     'DEFAULT_PAGINATION_CLASS': 'common.paginator.MflPaginationSerializer',
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'oauth2_provider.ext.rest_framework.OAuth2Authentication',
+        # 'oauth2_provider.ext.rest_framework.OAuth2Authentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
     'PAGE_SIZE': 30,
@@ -286,7 +290,8 @@ LOGGING = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': os.path.join(BASE_DIR, '/common/templates/'),
+        # 'DIRS': os.path.join(BASE_DIR, '/common/templates/'),
+        'DIRS': [(os.path.join(BASE_DIR, 'common/templates')), ],
         'APP_DIRS': True,
          'OPTIONS': {
             'context_processors': [
@@ -299,6 +304,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request'
             ],
         }
     },
@@ -318,11 +324,15 @@ GIS_BORDERS_CACHE_SECONDS = (60 * 60 * 24 * 366)
 # django-allauth related settings
 # some of these settings take into account that the target audience
 # of this system is not super-savvy
+
 AUTHENTICATION_BACKENDS = (
+    'users.backends.MflUserAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
     'oauth2_provider.backends.OAuth2Backend',
     'allauth.account.auth_backends.AuthenticationBackend',
-    'django.contrib.auth.backends.ModelBackend',
+    'users.backends.MflUserAuthBackend',
 )
+
 LOGIN_REDIRECT_URL = '/api/'
 
 SEARCH = {
@@ -392,10 +402,6 @@ SEARCH = {
                 },
                 {
                     "name": "FacilityStatus",
-                    "fields": ["name"]
-                },
-                {
-                    "name": "FacilityAdmissionStatus",
                     "fields": ["name"]
                 },
                 {
@@ -538,3 +544,5 @@ DHIS_PASSWORD = env('DHIS_PASSWORD')
 DHIS_CLIENT_ID = env('DHIS_CLIENT_ID')
 DHIS_CLIENT_SECRET = env('DHIS_CLIENT_SECRET')
 
+# Upgrade additions
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -1,57 +1,91 @@
-from django.conf.urls import url, include
+from django.urls import include, path, re_path
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_page
 from common.views import APIRoot, root_redirect_view
 
-from rest_auth.views import (
+import common.urls as common_urls
+import users.urls as users_urls
+import facilities.urls as facilities_urls
+import chul.urls as chul_urls
+import mfl_gis.urls as mfl_gis_urls
+import reporting.urls as reporting_urls
+import admin_offices.urls as admin_offices_urls
+import dj_rest_auth.registration.urls as dj_rest_auth_reg_urls
+import rest_framework.urls as rest_framework_urls
+import oauth2_provider.urls as oauth2_provider_urls
+# from rest_framework_swagger.views import get_swagger_view
+
+
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Snippets API",
+      default_version='v1',
+      description="Test description",
+      terms_of_service="https://www.google.com/policies/terms/",
+      contact=openapi.Contact(email="contact@snippets.local"),
+      license=openapi.License(name="BSD License"),
+   ),
+   public=True,
+   permission_classes=(permissions.AllowAny,),
+)
+
+from dj_rest_auth.views import (
     LoginView, LogoutView, UserDetailsView, PasswordChangeView,
     PasswordResetView, PasswordResetConfirmView
 )
 
 from rest_framework.authtoken.views import ObtainAuthToken
+from django.contrib import admin
 
 rest_auth_patterns = (
     # re-written from rest_auth.urls because of cache validation
     # URLs that do not require a session or valid token
-    url(r'^password/reset/$',
+    path('password/reset/',
         cache_page(0)(PasswordResetView.as_view()),
         name='rest_password_reset'),
-    url(r'^password/reset/confirm/$',
+    path('password/reset/confirm/',
         cache_page(0)(PasswordResetConfirmView.as_view()),
         name='rest_password_reset_confirm'),
-    url(r'^login/$',
+    path('login/',
         cache_page(0)(LoginView.as_view()), name='rest_login'),
     # URLs that require a user to be logged in with a valid session / token.
-    url(r'^logout/$',
+    path('logout/',
         cache_page(0)(LogoutView.as_view()), name='rest_logout'),
-    url(r'^user/$',
+    path('user/',
         cache_page(0)(UserDetailsView.as_view()), name='rest_user_details'),
-    url(r'^password/change/$',
+    path('password/change/',
         cache_page(0)(PasswordChangeView.as_view()), name='rest_password_change'),
 )
 
 apipatterns = (
-    url(r'^$', login_required(
+    path('', login_required(
         cache_page(60*60)(APIRoot.as_view())), name='root_listing'),
-    # url(r'^explore/', include('rest_framework_swagger.urls',
-    #     namespace='swagger')),
-    url(r'^common/', include('common.urls', namespace='common')),
-    url(r'^users/', include('users.urls', namespace='users')),
-    url(r'^facilities/', include('facilities.urls', namespace='facilities')),
-    url(r'^chul/', include('chul.urls', namespace='chul')),
-    url(r'^gis/', include('mfl_gis.urls', namespace='mfl_gis')),
-    url(r'^reporting/', include('reporting.urls', namespace='reporting')),
-    url(r'^admin_offices/', include('admin_offices.urls', namespace='admin_offices')),
-    url(r'^rest-auth/', include((rest_auth_patterns, None))),
-    url(r'^rest-auth/registration/', include('rest_auth.registration.urls',
-        namespace='rest_auth_registration'))
+    # path('explore/', include(rest_framework_swagger_urls, namespace='swagger')),
+    # path('explore/', schema_view),
+    path('common/', include(common_urls, namespace='common')),
+    path('users/', include(users_urls, namespace='users')),
+    path('facilities/', include(facilities_urls, namespace='facilities')),
+    path('chul/', include(chul_urls, namespace='chul')),
+    path('gis/', include(mfl_gis_urls, namespace='mfl_gis')),
+    path('reporting/', include(reporting_urls, namespace='reporting')),
+    path('admin_offices/', include(admin_offices_urls, namespace='admin_offices')),
+    path('rest-auth/', include((rest_auth_patterns, None))),
+    path('rest-auth/registration/', include((dj_rest_auth_reg_urls, 'dj_rest_auth'),
+        namespace='rest_auth_registration')),
+    path('explore<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('explore/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('docs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 )
 
 urlpatterns = (
-    url(r'^$', root_redirect_view, name='root_redirect'),
-    url(r'^api/', include((apipatterns, None), namespace='api')),
-    url(r'^accounts/',
-        include('rest_framework.urls', namespace='rest_framework')),
-    url(r'^api/token/', ObtainAuthToken.as_view()),
-    url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    path('', root_redirect_view, name='root_redirect'),
+    path('admin/', admin.site.urls),
+    path('api/', include((apipatterns, 'api'))),
+    path('accounts/', include(rest_framework_urls, namespace='rest_framework')),
+    re_path(r'^api/token/', ObtainAuthToken.as_view()),
+    path('o/', include(oauth2_provider_urls, namespace='oauth2_provider')),
 )

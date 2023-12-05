@@ -414,7 +414,30 @@ class FacilityFilter(CommonFieldsFilterset):
         """
         Filter the incomplete/complete facilities
         """
-        incomplete = qs.filter(code=None)
+        incomplete = qs.filter(
+            Q(
+            
+               Q(facility_services=None) & Q(code=None) |   
+               Q(facility_infrastructure=None) & Q(code=None) |
+               Q(facility_specialists=None) & Q(code=None) |
+               Q(facility_contacts=None) & Q(code=None) |
+               Q(facility_coordinates_through=None) & Q(code=None)
+            
+
+            # Q(facility_services=None) & Q(code=None)
+
+            # Q(facility_infrastructure=None) & Q(code=None)
+
+            # Q(facility_specialists=None) & Q(code=None)
+
+            # Q(facility_contacts=None) & Q(code=None)
+
+            # Q(facility_coordinates_through=None) & Q(code=None)
+
+               
+            )
+
+        )
         if value in TRUTH_NESS:
             return incomplete
         else:
@@ -454,7 +477,7 @@ class FacilityFilter(CommonFieldsFilterset):
 
     def filter_number_cots(self, qs, name, value):
         return qs.filter(number_of_cots__gte=1)
-
+    
     id = ListCharFilter(lookup_expr='icontains')
     name = django_filters.CharFilter(lookup_expr='icontains')
     code = ListIntegerFilter(lookup_expr='exact')

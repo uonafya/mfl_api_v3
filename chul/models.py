@@ -7,16 +7,18 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core import validators
 from django.utils import timezone, encoding
-from django.conf import settings
+from django.conf import settings 
 
 from common.models import AbstractBase, Contact, SequenceMixin
 from common.fields import SequenceField
 from facilities.models import Facility
 
-LOGGER = logging.getLogger(__name__)
+
+LOGGER = logging.getLogger(__name__) 
+
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class Status(AbstractBase):
 
     """
@@ -34,14 +36,14 @@ class Status(AbstractBase):
 
 
 @reversion.register(follow=['health_unit', 'contact'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CommunityHealthUnitContact(AbstractBase):
 
     """
     The contacts of the health unit may be email, fax mobile etc.
     """
-    health_unit = models.ForeignKey('CommunityHealthUnit')
-    contact = models.ForeignKey(Contact)
+    health_unit = models.ForeignKey('CommunityHealthUnit', on_delete=models.CASCADE)
+    contact = models.ForeignKey(Contact, on_delete=models.CASCADE)
 
     def __str__(self):
         return "{}: ({})".format(self.health_unit, self.contact)
@@ -50,16 +52,18 @@ class CommunityHealthUnitContact(AbstractBase):
         unique_together = ('health_unit', 'contact', )
         # a hack since the view_communityhealthunitcontact
         # is disappearing into thin air
+        '''
         permissions = (
             (
-                "view_communityhealthunitcontact",
+                # "view_communityhealthunitcontact",
                 "Can view community health_unit contact"
             ),
         )
+        '''
 
 
 @reversion.register(follow=['facility', 'status'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CommunityHealthUnit(SequenceMixin, AbstractBase):
 
     """
@@ -71,12 +75,11 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
     curative health services
     """
     name = models.CharField(max_length=100)
-    code = SequenceField(
-        unique=True, editable=False,
+    code = SequenceField(unique=True, editable=False,
         help_text='A sequential number allocated to each chu',
-        null=True, blank=True)
+	null=True, blank=True)
     facility = models.ForeignKey(
-        Facility,
+        Facility, on_delete=models.CASCADE,
         help_text='The facility on which the health unit is tied to.')
     status = models.ForeignKey(Status, on_delete=models.PROTECT)
     households_monitored = models.PositiveIntegerField(
@@ -84,8 +87,7 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
         help_text='The number of house holds a CHU is in-charge of')
     date_established = models.DateField(default=timezone.now)
     date_operational = models.DateField(null=True, blank=True)
-    is_approved = models.NullBooleanField(
-        blank=True, null=True, help_text='Determines if a chu has been approved')
+    is_approved = models.BooleanField(null=True, blank=True, help_text='Determines if a chu has been approved')
     approval_comment = models.TextField(null=True, blank=True)
     approval_date = models.DateTimeField(null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
@@ -218,11 +220,7 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
     @property
     def pending_updates(self):
         try:
-            chu = ChuUpdateBuffer.objects.get(
-                is_approved=False,
-                is_rejected=False,
-                health_unit=self
-            )
+            chu = ChuUpdateBuffer.objects.filter(is_approved=False, is_rejected=False, health_unit=self)[0] if len(ChuUpdateBuffer.objects.filter(is_approved=False, is_rejected=False, health_unit=self)) else ChuUpdateBuffer.objects.get(is_approved=False, is_rejected=False, health_unit=self)
             return chu.updates
         except ChuUpdateBuffer.DoesNotExist:
             return {}
@@ -230,17 +228,13 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
     @property
     def latest_update(self):
         try:
-            chu = ChuUpdateBuffer.objects.get(
-                is_approved=False,
-                is_rejected=False,
-                health_unit=self
-            )
+            chu = ChuUpdateBuffer.objects.filter(is_approved=False, is_rejected=False, health_unit=self)[0] if len(ChuUpdateBuffer.objects.filter(is_approved=False, is_rejected=False, health_unit=self)) else ChuUpdateBuffer.objects.get(is_approved=False, is_rejected=False, health_unit=self)
             return chu
         except ChuUpdateBuffer.DoesNotExist:
             return None
 
     def save(self, *args, **kwargs):
-        # new chus that have just been added but not approved yet
+	 # new chus that have just been added but not approved yet
         if not self.code and not self.is_approved:
             super(CommunityHealthUnit, self).save(*args, **kwargs)
         # existing chus that were approved previously and have been updated
@@ -252,9 +246,9 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
         # and have not been pushed to DHIS yet
         if self.is_approved and not self.code:
             self.code = self.generate_next_code_sequence()
-            if settings.PUSH_TO_DHIS:
-                self.push_chu_to_dhis2()
-            super(CommunityHealthUnit, self).save(*args, **kwargs)
+        if settings.PUSH_TO_DHIS:
+            self.push_chu_to_dhis2()
+        super(CommunityHealthUnit, self).save(*args, **kwargs)
 
     @property
     def average_rating(self):
@@ -338,7 +332,7 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
 
     def get_facility_dhis2_parent_id(self):
         from facilities.models.facility_models import DhisAuth
-        import requests
+        LOGGER.info('[ERROR] Facility Code : {}'.format(self.facility.code))
         r = requests.get(
             settings.DHIS_ENDPOINT + "api/organisationUnits.json",
             auth=(settings.DHIS_USERNAME, settings.DHIS_PASSWORD),
@@ -363,6 +357,7 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
                 }
             )
 
+
     class Meta(AbstractBase.Meta):
         unique_together = ('name', 'facility', )
         permissions = (
@@ -379,7 +374,7 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
 
 
 @reversion.register(follow=['health_worker', 'contact'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CommunityHealthWorkerContact(AbstractBase):
 
     """
@@ -396,7 +391,7 @@ class CommunityHealthWorkerContact(AbstractBase):
 
 
 @reversion.register(follow=['health_unit'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CommunityHealthWorker(AbstractBase):
 
     """
@@ -425,7 +420,7 @@ class CommunityHealthWorker(AbstractBase):
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CHUService(AbstractBase):
 
     """
@@ -446,7 +441,7 @@ class CHUService(AbstractBase):
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CHURating(AbstractBase):
 
     """Rating of a CHU"""
@@ -470,7 +465,7 @@ class ChuUpdateBuffer(AbstractBase):
     """
     Buffers a community units updates until they are approved by the CHRIO
     """
-    health_unit = models.ForeignKey(CommunityHealthUnit)
+    health_unit = models.ForeignKey(CommunityHealthUnit, on_delete=models.CASCADE)
     workers = models.TextField(null=True, blank=True)
     contacts = models.TextField(null=True, blank=True)
     basic = models.TextField(null=True, blank=True)
@@ -614,6 +609,9 @@ class ChuUpdateBuffer(AbstractBase):
 
     def __str__(self):
         return self.health_unit.name
+
+    # class Meta:
+    #     get_latest_by = ['health_unit']
 
 
 class CHUServiceLink(AbstractBase):

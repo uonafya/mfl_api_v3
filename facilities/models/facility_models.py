@@ -31,7 +31,7 @@ import threading, requests, base64
 LOGGER = logging.getLogger(__name__)
 
 
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class DhisAuth(ApiAuthentication):
     '''
     Authenticates to DHIS via OAuth2.
@@ -136,7 +136,7 @@ class DhisAuth(ApiAuthentication):
             }
         )
         print("Get Org Unit ID Response", r.text, str(code))
-        if len(r.json()["organisationUnits"]) is 1:
+        if len(r.json()["organisationUnits"]) == 1:
             # raise ValidationError(
             #     {
             #         "Error!": ["This facility is already available in DHIS2. Please ensure details are correct"]
@@ -265,7 +265,7 @@ class DhisAuth(ApiAuthentication):
 
     def push_facility_updates_to_dhis2(self, org_unit_id, facility_updates_payload):
         r = requests.put(
-            settings.DHIS_ENDPOINT + "api/organisationUnits/"+org_unit_id,
+            settings.DHIS_ENDPOINT + "api/organisationUnits/" + org_unit_id[0],
             auth=(settings.DHIS_USERNAME, settings.DHIS_PASSWORD),
             headers={
                 "Accept": "application/json"
@@ -273,7 +273,8 @@ class DhisAuth(ApiAuthentication):
             json=facility_updates_payload
         )
 
-        print("Update Facility Response", r.url, r.status_code, r.json())
+        LOGGER.info("PUSH_FACILITY_UPDATES_RESPONSE => {}".format(r.json()))
+        LOGGER.info("PUSH_FACILITY_UPDATES_STATUS_CODE => {}".format(r.json()["status"]))
 
         if r.json()["status"] != "OK":
             raise ValidationError(
@@ -300,7 +301,7 @@ class FacilityKephManager(models.Manager):
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class KephLevel(AbstractBase):
 
     """
@@ -325,7 +326,7 @@ class KephLevel(AbstractBase):
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class OwnerType(AbstractBase):
 
     """
@@ -349,7 +350,7 @@ class OwnerType(AbstractBase):
 
 
 @reversion.register(follow=['owner_type'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class Owner(AbstractBase, SequenceMixin):
 
     """
@@ -391,7 +392,7 @@ class Owner(AbstractBase, SequenceMixin):
 
 
 @reversion.register(follow=['officer', 'contact'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class OfficerContact(AbstractBase):
 
     """
@@ -414,7 +415,7 @@ class OfficerContact(AbstractBase):
 
 
 @reversion.register(follow=['job_title', 'contacts'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class Officer(AbstractBase):
 
     """
@@ -478,7 +479,7 @@ class Officer(AbstractBase):
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityStatus(AbstractBase):
 
     """
@@ -509,7 +510,7 @@ class FacilityStatus(AbstractBase):
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityAdmissionStatus(AbstractBase):
 
     """
@@ -535,10 +536,10 @@ class FacilityAdmissionStatus(AbstractBase):
 
 
 @reversion.register(follow=['preceding', ])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityType(AbstractBase):
     owner_type = models.ForeignKey(
-        OwnerType, null=True, blank=True)
+        OwnerType, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(
         max_length=100, unique=True,
         help_text="A short unique name for the facility type e.g DISPENSARY")
@@ -549,7 +550,7 @@ class FacilityType(AbstractBase):
         help_text="Parent of the facility type e.g sub-district hospitals "
         "are under Hospitals.")
     preceding = models.ForeignKey(
-        'self', null=True, blank=True, related_name='preceding_type',
+        'self', on_delete=models.CASCADE, null=True, blank=True, related_name='preceding_type',
         help_text='The facility type that comes before this type')
     parent = models.ForeignKey(
         'self', on_delete=models.PROTECT, null=True, blank=True)
@@ -573,7 +574,7 @@ class FacilityType(AbstractBase):
 
 
 @reversion.register(follow=['regulating_body', 'contact'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class RegulatingBodyContact(AbstractBase):
 
     """
@@ -588,7 +589,7 @@ class RegulatingBodyContact(AbstractBase):
 
 
 @reversion.register(follow=['regulatory_body_type', 'default_status'])  # noqa
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class RegulatingBody(AbstractBase):
 
     """
@@ -611,11 +612,11 @@ class RegulatingBody(AbstractBase):
     regulation_verb = models.CharField(
         max_length=100, null=True, blank=True)
     regulatory_body_type = models.ForeignKey(
-        OwnerType, null=True, blank=True,
+        OwnerType, on_delete=models.CASCADE, null=True, blank=True,
         help_text='Show the kind of institutions that the body regulates e.g'
         'private facilities')
     default_status = models.ForeignKey(
-        "RegulationStatus", null=True, blank=True,
+        "RegulationStatus", on_delete=models.CASCADE, null=True, blank=True,
         help_text="The default status for the facilities regulated by "
         "the particular regulator")
 
@@ -647,7 +648,7 @@ class RegulatingBody(AbstractBase):
 
 
 @reversion.register(follow=['regulatory_body', 'user'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class RegulatoryBodyUser(AbstractBase):
 
     """
@@ -692,7 +693,7 @@ class RegulatoryBodyUser(AbstractBase):
 
 
 @reversion.register(follow=['previous_status', 'next_status', ])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class RegulationStatus(AbstractBase):
 
     """
@@ -756,10 +757,10 @@ class RegulationStatus(AbstractBase):
         "PENDING_LICENSING could be described as 'waiting for the license to"
         "begin operating' ")
     previous_status = models.ForeignKey(
-        'self', related_name='previous_state', null=True, blank=True,
+        'self', on_delete=models.CASCADE, related_name='previous_state', null=True, blank=True,
         help_text='The regulation_status preceding this regulation status.')
     next_status = models.ForeignKey(
-        'self', related_name='next_state', null=True, blank=True,
+        'self', on_delete=models.CASCADE, related_name='next_state', null=True, blank=True,
         help_text='The regulation_status succeeding this regulation status.')
     is_initial_state = models.BooleanField(
         default=False,
@@ -819,7 +820,7 @@ class RegulationStatus(AbstractBase):
 
 
 @reversion.register(follow=['regulating_body', 'regulation_status'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityRegulationStatus(AbstractBase):
 
     """
@@ -870,7 +871,7 @@ class FacilityRegulationStatus(AbstractBase):
 
 
 @reversion.register(follow=['facility', 'contact'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityContact(AbstractBase):
 
     """
@@ -999,7 +1000,7 @@ class FacilityExportExcelMaterialView(models.Model):
     'facility_type', 'operation_status', 'ward', 'owner', 'contacts',
     'parent', 'regulatory_body', 'keph_level', 'sub_county', 'town'
 ])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class Facility(SequenceMixin, AbstractBase):
 
     """
@@ -1120,7 +1121,7 @@ class Facility(SequenceMixin, AbstractBase):
         Contact, through=FacilityContact,
         help_text='Facility contacts - email, phone, fax, postal etc')
     parent = models.ForeignKey(
-        'self', help_text='Indicates the umbrella facility of a facility',
+        'self', on_delete=models.CASCADE, help_text='Indicates the umbrella facility of a facility',
         null=True, blank=True)
     attributes = models.TextField(null=True, blank=True)
     regulatory_body = models.ForeignKey(
@@ -1133,7 +1134,7 @@ class Facility(SequenceMixin, AbstractBase):
 
     # set of boolean to optimize filtering though through tables
     regulated = models.BooleanField(default=False)
-    approved =  models.NullBooleanField(
+    approved =  models.BooleanField(
         blank=True, null=True, help_text='Has the facility been approved at the county level')
     rejected = models.BooleanField(default=False)
     has_edits = models.BooleanField(default=False)
@@ -1179,6 +1180,8 @@ class Facility(SequenceMixin, AbstractBase):
         ' the regulator')
     closed_date = models.DateTimeField(
         null=True, blank=True, help_text='Date the facility was closed')
+    approvalrejection_date = models.DateTimeField(
+        null=True, blank=True, help_text='Date the facility was approved or rejected')
     closing_reason = models.TextField(
         null=True, blank=True, help_text="Reason for closing the facility")
     date_established = models.DateField(
@@ -1191,13 +1194,13 @@ class Facility(SequenceMixin, AbstractBase):
         RegulationStatus, null=True, blank=True,
         on_delete=models.PROTECT,
         help_text='The regulatory status of the hospital')
-    reporting_in_dhis = models.NullBooleanField(
+    reporting_in_dhis = models.BooleanField(
         blank=True, null=True,
         help_text='A flag to indicate whether facility should have reporting in dhis')
-    admitting_maternity_only = models.NullBooleanField(
+    admitting_maternity_only = models.BooleanField(
         blank=True, null=True,
         help_text='A flag to indicate whether facility admits only maternity patients')
-    admitting_maternity_general = models.NullBooleanField(
+    admitting_maternity_general = models.BooleanField(
         blank=True, null=True,
         help_text='A flag to indicate whether facility admits both maternity & general casualty patients')
     admission_status = models.ForeignKey(
@@ -1205,13 +1208,13 @@ class Facility(SequenceMixin, AbstractBase):
         on_delete=models.PROTECT,
         help_text="Indicates whether the facility"
         "has been approved to admit and the admission categories it caters for")
-    reporting_in_dhis = models.NullBooleanField(
+    reporting_in_dhis = models.BooleanField(
         blank=True, null=True,
         help_text='A flag to indicate whether facility should have reporting in dhis')
-    nhif_accreditation = models.NullBooleanField(
+    nhif_accreditation = models.BooleanField(
         blank=True, null=True, default=False,
         help_text='A flag to indicate whether facility is accredited by nhif')
-    approved_national_level = models.NullBooleanField(
+    approved_national_level = models.BooleanField(
         blank=True, null=True, help_text='Has the facility been approved at the national level')
 
     dhis2_api_auth = DhisAuth()
@@ -1321,30 +1324,6 @@ class Facility(SequenceMixin, AbstractBase):
         else:
             pass
 
-    def push_facility_updates(self):
-        pass
-        # if self.approved_national_level:
-        #     from mfl_gis.models import FacilityCoordinates
-        #     import re
-        #     self.dhis2_api_auth.get_oauth2_token()
-        #
-        #     dhis2_parent_id = self.dhis2_api_auth.get_parent_id(self.ward.code)
-        #     dhis2_org_unit_id = self.dhis2_api_auth.get_org_unit_id(self.code)
-        #     new_facility_updates_payload = {
-        #         "code": str(self.code),
-        #         "name": str(self.name),
-        #         "shortName": str(self.name),
-        #         "displayName": str(self.official_name),
-        #         "parent": {
-        #             "id": dhis2_parent_id
-        #         },
-        #         "openingDate": self.facility.date_established.strftime("%Y-%m-%d"),
-        #         "coordinates": self.dhis2_api_auth.format_coordinates(
-        #             re.search(r'\((.*?)\)', str(FacilityCoordinates.objects.values('coordinates')
-        #                                         .get(facility_id=self.id)['coordinates'])).group(1))
-        #     }
-        #
-        #     self.dhis2_api_auth.push_facility_updates_to_dhis2(dhis2_org_unit_id, new_facility_updates_payload)
 
     def validate_facility_name(self):
         if self.pk:
@@ -1612,6 +1591,8 @@ class Facility(SequenceMixin, AbstractBase):
             }
             for h_r in hr
         ]
+
+
 
 
     @property
@@ -1952,14 +1933,14 @@ class Facility(SequenceMixin, AbstractBase):
 
 
 @reversion.register(follow=['facility'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityUpdates(AbstractBase):
 
     """
     Buffers facility updates until when they are approved upon
     which they reflect on the facility.
     """
-    facility = models.ForeignKey(Facility, related_name='updates')
+    facility = models.ForeignKey(Facility, on_delete=models.CASCADE, related_name='updates')
     approved = models.BooleanField(default=False)
     cancelled = models.BooleanField(default=False)
     facility_updates = models.TextField(null=True, blank=True)
@@ -2063,9 +2044,9 @@ class FacilityUpdates(AbstractBase):
 
                 setattr(self.facility, field_name, value)
             self.facility.save(allow_save=True)
-            if self.facility.code and self.facility.is_complete and self.facility.approved_national_level:
-                self.facility.push_new_facility(self.facility.code)
-            # self.push_facility_updates()
+            # if self.facility.code and self.facility.is_complete and self.facility.approved_national_level:
+            #     self.facility.push_new_facility(self.facility.code)
+            self.push_facility_updates()
 
 
     def update_facility_services(self):
@@ -2216,6 +2197,7 @@ class FacilityUpdates(AbstractBase):
         # print("Names;", "Official Name:", self.facility.official_name, "Name:", self.facility.name)
         #
         # print("New Facility Push Payload => ", new_facility_updates_payload)
+        
         self.dhis2_api_auth.push_facility_updates_to_dhis2(dhis2_org_unit_id, new_facility_updates_payload)
 
     def clean(self, *args, **kwargs):
@@ -2254,7 +2236,7 @@ class FacilityUpdates(AbstractBase):
 
 
 @reversion.register(follow=['operation_status', 'facility', ])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityOperationState(AbstractBase):
 
     """
@@ -2278,7 +2260,7 @@ class FacilityOperationState(AbstractBase):
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityLevelChangeReason(AbstractBase):
 
     """
@@ -2292,7 +2274,7 @@ class FacilityLevelChangeReason(AbstractBase):
 
 
 @reversion.register(follow=['facility', 'facility_type', 'keph_level', 'reason'])  # noqa
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityUpgrade(AbstractBase):
 
     """
@@ -2364,7 +2346,7 @@ class FacilityUpgrade(AbstractBase):
 
 
 @reversion.register(follow=['facility', ])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityApproval(AbstractBase):
 
     """
@@ -2411,7 +2393,7 @@ class FacilityApproval(AbstractBase):
 
 
 @reversion.register(follow=['facility_unit', 'regulation_status'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityUnitRegulation(AbstractBase):
 
     """
@@ -2423,14 +2405,14 @@ class FacilityUnitRegulation(AbstractBase):
     facility_unit = models.ForeignKey(
         'FacilityUnit', related_name='regulations', on_delete=models.PROTECT)
     regulation_status = models.ForeignKey(
-        RegulationStatus, related_name='facility_units')
+        RegulationStatus, on_delete=models.CASCADE, related_name='facility_units')
 
     def __str__(self):
         return "{}: {}".format(self.facility_unit, self.regulation_status)
 
 
 @reversion.register(follow=['facility', 'unit'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityUnit(AbstractBase):
 
     """
@@ -2466,7 +2448,7 @@ class FacilityUnit(AbstractBase):
 
 
 @reversion.register(follow=['parent', ])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class ServiceCategory(AbstractBase):
 
     """
@@ -2497,7 +2479,7 @@ class ServiceCategory(AbstractBase):
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class OptionGroup(AbstractBase):
 
     """
@@ -2551,7 +2533,7 @@ class Option(AbstractBase):
 
 
 @reversion.register(follow=['category', 'group', 'keph_level', ])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class Service(SequenceMixin, AbstractBase):
 
     """
@@ -2594,7 +2576,7 @@ class Service(SequenceMixin, AbstractBase):
 
 
 @reversion.register(follow=['facility', 'option', 'service'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityService(AbstractBase):
 
     """
@@ -2661,7 +2643,7 @@ class FacilityService(AbstractBase):
 
 
 @reversion.register(follow=['facility_service', ])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityServiceRating(AbstractBase):
 
     """Rating of a facility's service"""
@@ -2683,7 +2665,7 @@ class FacilityServiceRating(AbstractBase):
 
 
 @reversion.register(follow=['facility', 'officer'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityOfficer(AbstractBase):
 
     """
@@ -2703,7 +2685,7 @@ class FacilityOfficer(AbstractBase):
 
 
 @reversion.register(follow=['regulatory_body'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityDepartment(AbstractBase):
 
     """
@@ -2719,7 +2701,7 @@ class FacilityDepartment(AbstractBase):
 
 
 @reversion.register(follow=['facility_type', 'owner'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class RegulatorSync(AbstractBase):
 
     """
@@ -2811,7 +2793,7 @@ class RegulatorSync(AbstractBase):
 
 
 @reversion.register(follow=['parent'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class SpecialityCategory(AbstractBase):
 
     """
@@ -2843,7 +2825,7 @@ class SpecialityCategory(AbstractBase):
 
 
 @reversion.register(follow=['category'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class Speciality(SequenceMixin, AbstractBase):
 
     """
@@ -2879,7 +2861,7 @@ class Speciality(SequenceMixin, AbstractBase):
 
 
 @reversion.register(follow=['facility', 'speciality'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilitySpecialist(AbstractBase):
 
     """
@@ -2926,7 +2908,7 @@ class FacilitySpecialist(AbstractBase):
 
 ####### infra
 @reversion.register(follow=['parent'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class InfrastructureCategory(AbstractBase):
 
     """
@@ -2958,7 +2940,7 @@ class InfrastructureCategory(AbstractBase):
 
 
 @reversion.register(follow=['category'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class Infrastructure(SequenceMixin, AbstractBase):
 
     """
@@ -2970,7 +2952,7 @@ class Infrastructure(SequenceMixin, AbstractBase):
         max_length=50, null=True, blank=True,
         help_text='A short form for the infrastructure'
         )
-    numbers = models.NullBooleanField(
+    numbers = models.BooleanField(
         blank=True, null=True, default=True,
         help_text='A flag to indicate whether an infrastructure item can have count/numbers tracked ')
     category = models.ForeignKey(
@@ -2997,7 +2979,7 @@ class Infrastructure(SequenceMixin, AbstractBase):
 
 
 @reversion.register(follow=['facility', 'infrastructure'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class FacilityInfrastructure(AbstractBase):
 
     """

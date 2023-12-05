@@ -2,7 +2,8 @@ from __future__ import unicode_literals
 import json
 
 from django.db import transaction
-from django.utils import six
+# from django.utils import six
+import six
 from rest_framework import serializers
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from common.serializers import AbstractFieldsMixin, PartialResponseMixin
@@ -115,7 +116,7 @@ class FacilityCoordinatesListSerializer(
 
     class Meta(AbstractFieldsMixin.Meta):
         model = FacilityCoordinates
-        geo_field = "geometry"
+        # geo_field = "geometry"
         exclude = (
             'created', 'created_by', 'updated', 'updated_by', 'deleted',
             'search', 'collection_date', 'active',
@@ -238,10 +239,10 @@ class ConstituencyBoundarySerializer(AbstractBoundarySerializer):
 
     class Meta(object):
         model = ConstituencyBoundary
-        geo_field = 'geometry'
+        # geo_field = 'geometry'
         exclude = (
             'active', 'deleted', 'search', 'created', 'updated', 'created_by',
-            'updated_by', 'area', 'mpoly',
+            'updated_by', 'area',
         )
 
 
@@ -275,7 +276,7 @@ class WardBoundarySerializer(AbstractBoundarySerializer):
         geo_field = 'geometry'
         exclude = (
             'active', 'deleted', 'search', 'created', 'updated', 'created_by',
-            'updated_by', 'area', 'mpoly',
+            'updated_by', 'area',
         )
 
 
