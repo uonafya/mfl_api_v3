@@ -12,7 +12,6 @@ from .views import (
 )
 
 app_name = "users"
-
 urlpatterns = (
 
     path('applications/', MFLOauthApplicationListView.as_view(),

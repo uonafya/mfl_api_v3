@@ -18,3 +18,4 @@ WeasyPrint==60.1
 djangorestframework-gis==1.0
 dj-rest-auth==5.0.2 
 drf-yasg==1.21.7
+drf-extensions==0.7.1

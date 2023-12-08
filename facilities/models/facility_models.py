@@ -1047,6 +1047,7 @@ class Facility(SequenceMixin, AbstractBase):
         default=0,
         help_text="The number of High Dependency Units (HDU) beds"
         " that a facility has e.g 0")
+    # Fixed on upgrade
     number_of_inpatient_beds = models.PositiveIntegerField(
         default=0,
         help_text="The number of General In-patient beds"
@@ -1180,6 +1181,7 @@ class Facility(SequenceMixin, AbstractBase):
         ' the regulator')
     closed_date = models.DateTimeField(
         null=True, blank=True, help_text='Date the facility was closed')
+    # Fixed on upgrade
     approvalrejection_date = models.DateTimeField(
         null=True, blank=True, help_text='Date the facility was approved or rejected')
     closing_reason = models.TextField(

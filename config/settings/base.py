@@ -7,7 +7,7 @@ BASE_DIR = os.path.dirname(
 # Override in production via env
 
 env = environ.Env(
-    DATABASE_URL=(str, 'postgres://dbuser:dbpass@localhost:5432/mfl'),
+    DATABASE_URL=(str, 'postgres://cpimsdbuser:Xaen!ee8@localhost:5432/mfl_live'),
     DEBUG=(bool, True),
     FRONTEND_URL=(str, "http://localhost:8062"),
     REALTIME_INDEX=(bool, False),
@@ -58,13 +58,14 @@ MIDDLEWARE = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'oauth2_provider.middleware.OAuth2TokenMiddleware',
     # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'reversion.middleware.RevisionMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'allauth.account.middleware.AccountMiddleware'
+    'allauth.account.middleware.AccountMiddleware',
 )
 
 EMAIL_HOST = env('EMAIL_HOST')
@@ -131,7 +132,7 @@ LOCAL_APPS = [
     'search',
     'admin_offices',
 ]
-CORS_ALLOW_CREDENTIALS = False
+# CORS_ALLOW_CREDENTIALS = False
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_HEADERS = (
     'x-requested-with',
@@ -148,7 +149,8 @@ AUTH_USER_MODEL = 'users.MflUser'
 ROOT_URLCONF = 'config.urls'
 WSGI_APPLICATION = 'config.wsgi.application'
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'  # This is INTENTIONAL
+# TIME_ZONE = 'UTC'  # This is INTENTIONAL
+TIME_ZONE = 'Africa/Nairobi'
 USE_TZ = True
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
@@ -206,7 +208,7 @@ REST_FRAMEWORK = {
 }
 SWAGGER_SETTINGS = {
     'exclude_namespaces': [],
-    'api_version': '2.0',
+    'api_version': '3.0',
     'api_path': '/',
     'enabled_methods': [
         'get',
@@ -220,10 +222,10 @@ SWAGGER_SETTINGS = {
     'is_superuser': False,
     'info': {
         'contact': 'developers@savannahinformatics.com',
-        'description': 'Explore the MFL v2 API',
+        'description': 'Explore the MFL v3 API',
         'license': 'MIT License',
         'licenseUrl': 'http://choosealicense.com/licenses/mit/',
-        'title': 'MFL v2 API',
+        'title': 'MFL v3 API',
     },
     'doc_expansion': 'full',
 }
@@ -304,7 +306,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.request'
+                'django.template.context_processors.request',
             ],
         }
     },
@@ -326,11 +328,10 @@ GIS_BORDERS_CACHE_SECONDS = (60 * 60 * 24 * 366)
 # of this system is not super-savvy
 
 AUTHENTICATION_BACKENDS = (
-    'users.backends.MflUserAuthBackend',
-    'django.contrib.auth.backends.ModelBackend',
     'oauth2_provider.backends.OAuth2Backend',
+    'django.contrib.auth.backends.ModelBackend',
+    # 'users.backends.MflUserAuthBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
-    'users.backends.MflUserAuthBackend',
 )
 
 LOGIN_REDIRECT_URL = '/api/'
@@ -480,7 +481,7 @@ SEARCH = {
     ]
 }
 
-OAUTH2_PROVIDER_APPLICATION_MODEL = 'users.MFLOAuthApplication'
+# OAUTH2_PROVIDER_APPLICATION_MODEL = 'users.MFLOAuthApplication'
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_EMAIL_REQUIRED = True

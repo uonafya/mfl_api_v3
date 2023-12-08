@@ -9,7 +9,7 @@ class MflUserAuthBackend(ModelBackend):
     def authenticate(self, username=None, password=None):
         """ Authenticate a user based on workforce_id / national_id. """
         try:
-            print("Start")
+            print("Start", username, password)
             user = MflUser.objects.get(email__iexact=username.lower())
             if settings.ALLOW_EMPLOYEE_NUMBER_LOGIN:
                 if not user:

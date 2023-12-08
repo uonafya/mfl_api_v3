@@ -22,11 +22,11 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
    openapi.Info(
-      title="Snippets API",
-      default_version='v1',
-      description="Test description",
-      terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="contact@snippets.local"),
+      title="Kenya Master Health Facility Registry (KMHFR) API",
+      default_version='v3',
+      description="Kenya Master Health Facility Registry (KMHFR) API version 3",
+      terms_of_service="https://api.kmhfltest.health.go.ke/terms/",
+      contact=openapi.Contact(email="support@healthit.uonbi.ac.ke"),
       license=openapi.License(name="BSD License"),
    ),
    public=True,
@@ -64,8 +64,6 @@ rest_auth_patterns = (
 apipatterns = (
     path('', login_required(
         cache_page(60*60)(APIRoot.as_view())), name='root_listing'),
-    # path('explore/', include(rest_framework_swagger_urls, namespace='swagger')),
-    # path('explore/', schema_view),
     path('common/', include(common_urls, namespace='common')),
     path('users/', include(users_urls, namespace='users')),
     path('facilities/', include(facilities_urls, namespace='facilities')),
@@ -89,3 +87,6 @@ urlpatterns = (
     re_path(r'^api/token/', ObtainAuthToken.as_view()),
     path('o/', include(oauth2_provider_urls, namespace='oauth2_provider')),
 )
+admin.site.site_header = 'KMHFR Administration'
+admin.site.site_title = 'KMHFR administration'
+admin.site.index_title = 'KMHFR admin'
