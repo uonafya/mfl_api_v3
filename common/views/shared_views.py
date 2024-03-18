@@ -159,7 +159,7 @@ class APIRoot(APIView):
 
      * the [Swagger](http://swagger.io/)
      [**sandbox** ( click here )](/api/explore/#!/api)
-     * the browsable API
+     * the [browsable API ( click here )](/api/docs/)
     # Authentication
     Anonymous users have **read only** access to *most* ( not all ) views.
     If you want to try out the `POST`, `PUT`, `PATCH` and `DELETE` actions,

@@ -18,7 +18,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class Status(AbstractBase):
 
     """
@@ -36,14 +36,14 @@ class Status(AbstractBase):
 
 
 @reversion.register(follow=['health_unit', 'contact'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CommunityHealthUnitContact(AbstractBase):
 
     """
     The contacts of the health unit may be email, fax mobile etc.
     """
-    health_unit = models.ForeignKey('CommunityHealthUnit')
-    contact = models.ForeignKey(Contact)
+    health_unit = models.ForeignKey('CommunityHealthUnit', on_delete=models.CASCADE)
+    contact = models.ForeignKey(Contact, on_delete=models.CASCADE)
 
     def __str__(self):
         return "{}: ({})".format(self.health_unit, self.contact)
@@ -52,16 +52,18 @@ class CommunityHealthUnitContact(AbstractBase):
         unique_together = ('health_unit', 'contact', )
         # a hack since the view_communityhealthunitcontact
         # is disappearing into thin air
+        '''
         permissions = (
             (
-                "view_communityhealthunitcontact",
+                # "view_communityhealthunitcontact",
                 "Can view community health_unit contact"
             ),
         )
+        '''
 
 
 @reversion.register(follow=['facility', 'status'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CommunityHealthUnit(SequenceMixin, AbstractBase):
 
     """
@@ -77,7 +79,7 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
         help_text='A sequential number allocated to each chu',
 	null=True, blank=True)
     facility = models.ForeignKey(
-        Facility,
+        Facility, on_delete=models.CASCADE,
         help_text='The facility on which the health unit is tied to.')
     status = models.ForeignKey(Status, on_delete=models.PROTECT)
     households_monitored = models.PositiveIntegerField(
@@ -85,7 +87,7 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
         help_text='The number of house holds a CHU is in-charge of')
     date_established = models.DateField(default=timezone.now)
     date_operational = models.DateField(null=True, blank=True)
-    is_approved = models.NullBooleanField(null=True, blank=True, help_text='Determines if a chu has been approved')
+    is_approved = models.BooleanField(null=True, blank=True, help_text='Determines if a chu has been approved')
     approval_comment = models.TextField(null=True, blank=True)
     approval_date = models.DateTimeField(null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
@@ -244,8 +246,8 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
         # and have not been pushed to DHIS yet
         if self.is_approved and not self.code:
             self.code = self.generate_next_code_sequence()
-	    if settings.PUSH_TO_DHIS:
-                self.push_chu_to_dhis2()
+        if settings.PUSH_TO_DHIS:
+            self.push_chu_to_dhis2()
         super(CommunityHealthUnit, self).save(*args, **kwargs)
 
     @property
@@ -372,7 +374,7 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
 
 
 @reversion.register(follow=['health_worker', 'contact'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CommunityHealthWorkerContact(AbstractBase):
 
     """
@@ -389,7 +391,7 @@ class CommunityHealthWorkerContact(AbstractBase):
 
 
 @reversion.register(follow=['health_unit'])
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CommunityHealthWorker(AbstractBase):
 
     """
@@ -418,7 +420,7 @@ class CommunityHealthWorker(AbstractBase):
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CHUService(AbstractBase):
 
     """
@@ -439,7 +441,7 @@ class CHUService(AbstractBase):
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CHURating(AbstractBase):
 
     """Rating of a CHU"""
@@ -463,7 +465,7 @@ class ChuUpdateBuffer(AbstractBase):
     """
     Buffers a community units updates until they are approved by the CHRIO
     """
-    health_unit = models.ForeignKey(CommunityHealthUnit)
+    health_unit = models.ForeignKey(CommunityHealthUnit, on_delete=models.CASCADE)
     workers = models.TextField(null=True, blank=True)
     contacts = models.TextField(null=True, blank=True)
     basic = models.TextField(null=True, blank=True)

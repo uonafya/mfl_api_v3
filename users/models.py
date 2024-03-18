@@ -125,7 +125,7 @@ class MflUserManager(BaseUserManager):
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# # @encoding.python_2_unicode_compatible
 class JobTitle(models.Model):
 
     """
@@ -157,15 +157,17 @@ class JobTitle(models.Model):
 
     class Meta(object):
         ordering = ('-created', )
+        '''
         permissions = (
             (
                 "view_jobtitle",
                 "Can view job title"
             ),
         )
+        '''
 
 
-@encoding.python_2_unicode_compatible
+# # @encoding.python_2_unicode_compatible
 class MflUser(AbstractBaseUser, PermissionsMixin):
 
     """
@@ -372,9 +374,10 @@ class MflUser(AbstractBaseUser, PermissionsMixin):
     class Meta(object):
         default_permissions = ('add', 'change', 'delete', 'view', )
         ordering = ('-date_joined', )
+        db_table = 'users_mfluser'
 
 
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class MFLOAuthApplication(AbstractApplication):
 
     def __str__(self):
@@ -386,7 +389,7 @@ class MFLOAuthApplication(AbstractApplication):
         default_permissions = ('add', 'change', 'delete', 'view', )
 
 
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class CustomGroup(models.Model):
     group = models.OneToOneField(
         Group, on_delete=models.PROTECT, related_name='custom_group_fields')
@@ -411,7 +414,7 @@ class CustomGroup(models.Model):
 
 
 @reversion.register
-@encoding.python_2_unicode_compatible
+# @encoding.python_2_unicode_compatible
 class ProxyGroup(Group):
 
     @property

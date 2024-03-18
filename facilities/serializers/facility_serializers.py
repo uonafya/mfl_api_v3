@@ -590,7 +590,7 @@ class FacilityUnitRegulationSerializer(
 class FacilityUpdatesSerializer(
         AbstractFieldsMixin, serializers.ModelSerializer):
 
-    facility_updates = serializers.ReadOnlyField()
+    # facility_updates = serializers.ReadOnlyField()
     facility_updated_json = serializers.ReadOnlyField()
     created_by_name = serializers.ReadOnlyField(
         source='updated_by.get_full_name')
