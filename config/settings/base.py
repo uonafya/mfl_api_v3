@@ -7,7 +7,7 @@ BASE_DIR = os.path.dirname(
 # Override in production via env
 
 env = environ.Env(
-    DATABASE_URL=(str, 'postgres://cpimsdbuser:Xaen!ee8@localhost:5432/mfl_live'),
+    DATABASE_URL=(str, 'postgres://mfl:mfl@localhost:5432/mfl'),
     DEBUG=(bool, True),
     FRONTEND_URL=(str, "http://localhost:8062"),
     REALTIME_INDEX=(bool, False),
@@ -75,7 +75,8 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_SUBJECT_PREFIX = '[Master Facility List] '
 
-ALLOWED_HOSTS = env('ALLOWED_HOSTS').split(',') + ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = env('ALLOWED_HOSTS').split(',') + ['localhost', '127.0.0.1', '0.0.0.0',''
+                                                                                       '29a4-102-208-44-38.ngrok-free.app']
 # ALLOWED_HOSTS = ['.locahost', ' .health.go.ke', '198.199.125.166', 'api.kmhfltest.health.go.ke']
 
 INSTALLED_APPS = (
@@ -481,7 +482,7 @@ SEARCH = {
     ]
 }
 
-# OAUTH2_PROVIDER_APPLICATION_MODEL = 'users.MFLOAuthApplication'
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'users.MFLOAuthApplication'
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_EMAIL_REQUIRED = True
@@ -515,7 +516,9 @@ if env('HTTPS_ENABLED'):
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
 
-
+CSRF_TRUSTED_ORIGINS = [
+    'https://3553-102-208-44-38.ngrok-free.app',
+]
 CSRF_COOKIE_AGE = None
 CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_HTTPONLY = True
