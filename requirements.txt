@@ -1,5 +1,5 @@
 django==4.2.7
-python-environ-0.4.54
+python-environ==0.4.54
 celery==5.3.6
 django-oauth-toolkit==2.3.0
 django-rest-auth==0.9.5
@@ -19,3 +19,5 @@ djangorestframework-gis==1.0
 dj-rest-auth==5.0.2 
 drf-yasg==1.21.7
 drf-extensions==0.7.1
+setuptools==79.0.0
+drf-extensions==0.8.0
