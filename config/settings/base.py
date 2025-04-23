@@ -500,6 +500,9 @@ REST_AUTH_SERIALIZERS = {
         'users.serializers.MflPasswordChangeSerializer'
 }
 
+REST_AUTH = {
+    'USER_DETAILS_SERIALIZER': 'users.serializers.MflUserSerializer',
+}
 # django-allauth forces this atrocity on us ( true at the time of writing )
 SITE_ID = 1
 
