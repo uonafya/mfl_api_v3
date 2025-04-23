@@ -1,9 +1,8 @@
 from __future__ import unicode_literals
 import json
 
+from django.contrib.gis.geos import Point
 from django.db import transaction
-# from django.utils import six
-import six
 from rest_framework import serializers
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from common.serializers import AbstractFieldsMixin, PartialResponseMixin
@@ -40,11 +39,19 @@ class BufferCooridinatesMixin(object):
             facility, 'id') else facility
 
         coordinates = []
-        if isinstance(validated_data.get('coordinates'), six.string_types):
+        if isinstance(validated_data.get('coordinates'), str):
             coordinates = json.loads(validated_data.get('coordinates'))
 
         if isinstance(validated_data.get('coordinates'), dict):
             coordinates = validated_data.get('coordinates')
+
+        if isinstance(validated_data.get('coordinates'), Point):
+            pointx = validated_data['coordinates'].x
+            pointy = validated_data['coordinates'].y
+            coordinates = {
+                'coordinates': [pointx, pointy]
+            }
+
 
         facility_update = self.get_facility_update(facility)
 
@@ -116,7 +123,7 @@ class FacilityCoordinatesListSerializer(
 
     class Meta(AbstractFieldsMixin.Meta):
         model = FacilityCoordinates
-        # geo_field = "geometry"
+        geo_field = "geometry"
         exclude = (
             'created', 'created_by', 'updated', 'updated_by', 'deleted',
             'search', 'collection_date', 'active',
@@ -151,6 +158,10 @@ class FacilityCoordinateSimpleSerializer(
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        print (validated_data)
+        coordinates_data = validated_data.get('coordinates')['coordinates']
+        point = Point(x=coordinates_data[0], y=coordinates_data[1])
+        validated_data['coordinates'] = point
         facility = instance.facility
         if facility.approved:
             FacilityCoordinates(**validated_data).clean()
@@ -239,10 +250,10 @@ class ConstituencyBoundarySerializer(AbstractBoundarySerializer):
 
     class Meta(object):
         model = ConstituencyBoundary
-        # geo_field = 'geometry'
+        geo_field = 'geometry'
         exclude = (
             'active', 'deleted', 'search', 'created', 'updated', 'created_by',
-            'updated_by', 'area',
+            'updated_by', 'area', 'mpoly',
         )
 
 
@@ -276,7 +287,7 @@ class WardBoundarySerializer(AbstractBoundarySerializer):
         geo_field = 'geometry'
         exclude = (
             'active', 'deleted', 'search', 'created', 'updated', 'created_by',
-            'updated_by', 'area',
+            'updated_by', 'area', 'mpoly',
         )
 
 
