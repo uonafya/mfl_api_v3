@@ -334,7 +334,8 @@ class FilterReportMixin(object):
             if county_id:
                 row_comparison = self.request.query_params.get('row_comparison', 'county')
                 if row_comparison not in self.row_comparison_options:
-                    raise ValidationError(f"Invalid row_comparison. Choose from {list(self.row_comparison_options.keys())}")
+                    raise ValidationError(
+                        f"Invalid row_comparison. Choose from {list(self.row_comparison_options.keys())}")
                 filters[self.row_comparison_options[row_comparison]['filter_field']] = county_id
             return self._get_matrix_report(filters=filters)
 
@@ -349,6 +350,8 @@ class MatrixReportView(FilterReportMixin, APIView):
             'results': data,
             'totals': totals
         })
+
+
 class TestReportView(FilterReportMixin, APIView):
     def get(self, *args, **kwargs):
         data, totals = self.get_report_data()

@@ -161,7 +161,7 @@ class FacilityCoordinatesListView(GISListCreateAPIView):
             queryset = queryset.filter(
                 facility__ward__constituency=constituency)
 
-        result = [fc.json_features for fc in queryset]
+        result = [fc.json_features for fc in queryset.all()]
         return views.Response(data=result)
 
 
