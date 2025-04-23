@@ -35,10 +35,10 @@ schema_view = get_schema_view(
 )
 
 from dj_rest_auth.views import (
-    LoginView, LogoutView, PasswordChangeView,
+    LoginView, LogoutView, UserDetailsView, PasswordChangeView,
     PasswordResetView, PasswordResetConfirmView
 )
-from users.views import  LoggedInUserDetailView
+
 from rest_framework.authtoken.views import ObtainAuthToken
 from django.contrib import admin
 
@@ -57,7 +57,7 @@ rest_auth_patterns = (
     path('logout/',
         cache_page(0)(LogoutView.as_view()), name='rest_logout'),
     path('user/',
-        cache_page(0)(LoggedInUserDetailView.as_view()), name='rest_user_details'),
+        cache_page(0)(UserDetailsView.as_view()), name='rest_user_details'),
     path('password/change/',
         cache_page(0)(PasswordChangeView.as_view()), name='rest_password_change'),
 )
