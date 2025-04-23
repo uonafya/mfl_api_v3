@@ -1,11 +1,13 @@
 from rest_framework import generics
+from rest_framework.generics import GenericAPIView, RetrieveUpdateAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import Response, status
 
 from django.contrib.auth.models import Permission, Group
 from django.shortcuts import get_object_or_404
 
 from common.utilities import CustomRetrieveUpdateDestroyView
-from common.models import(
+from common.models import (
     UserCounty, UserSubCounty, UserConstituency, UserContact)
 
 from .models import MflUser, MFLOAuthApplication, CustomGroup, ProxyGroup
@@ -31,14 +33,14 @@ class PermissionsListView(generics.ListAPIView):
     queryset = Permission.objects.all()
     serializer_class = PermissionSerializer
     filter_class = PermissionFilter
-    ordering_fields = ('name', )
+    ordering_fields = ('name',)
 
 
 class GroupListView(generics.ListCreateAPIView):
     queryset = ProxyGroup.objects.all()
     serializer_class = GroupSerializer
     filter_class = GroupFilter
-    ordering_fields = ('name', )
+    ordering_fields = ('name',)
 
     def get_queryset(self, *args, **kwargs):
         user = self.request.user
@@ -46,7 +48,7 @@ class GroupListView(generics.ListCreateAPIView):
         if user.county:
             group_ids = [
                 grp.id for grp in ProxyGroup.objects.all()
-                if  grp.is_county_level
+                if grp.is_county_level
             ]
             return ProxyGroup.objects.filter(id__in=group_ids)
         elif user.sub_county or user.constituency:
@@ -161,6 +163,30 @@ class UserDetailView(CustomRetrieveUpdateDestroyView):
             user.is_active = False
             user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class LoggedInUserDetailView(RetrieveUpdateAPIView):
+    """
+    Reads and updates UserModel fields
+    Accepts GET, PUT, PATCH methods.
+
+    Default accepted fields: username, first_name, last_name
+    Default display fields: pk, username, email, first_name, last_name
+    Read-only fields: pk, email
+
+    Returns UserModel fields.
+    """
+    serializer_class = MflUserSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self):
+        return self.request.user
+
+    def get_queryset(self):
+        """
+        Adding this method since it is sometimes called when using
+        django-rest-swagger
+        """
+        return get_user_model().objects.none()
 
 
 class MFLOauthApplicationListView(generics.ListCreateAPIView):
