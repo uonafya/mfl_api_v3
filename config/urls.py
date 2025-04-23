@@ -9,6 +9,7 @@ import facilities.urls as facilities_urls
 import chul.urls as chul_urls
 import mfl_gis.urls as mfl_gis_urls
 import reporting.urls as reporting_urls
+import analytics.urls as analytics_urls
 import admin_offices.urls as admin_offices_urls
 import dj_rest_auth.registration.urls as dj_rest_auth_reg_urls
 import rest_framework.urls as rest_framework_urls
@@ -70,6 +71,7 @@ apipatterns = (
     path('chul/', include(chul_urls, namespace='chul')),
     path('gis/', include(mfl_gis_urls, namespace='mfl_gis')),
     path('reporting/', include(reporting_urls, namespace='reporting')),
+    path('analytics/', include(analytics_urls, namespace='analytics')),
     path('admin_offices/', include(admin_offices_urls, namespace='admin_offices')),
     path('rest-auth/', include((rest_auth_patterns, None))),
     path('rest-auth/registration/', include((dj_rest_auth_reg_urls, 'dj_rest_auth'),
