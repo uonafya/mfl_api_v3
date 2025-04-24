@@ -106,14 +106,16 @@ class FilterReportMixin(object):
 
     def _get_matrix_report(self, filters={}):
         # Get query parameters
-        row_comparison = self.request.query_params.get('row_comparison', 'county')
-        col_dims = self.request.query_params.get('col_dims', 'facility_type__name,owner__name,keph_level__name').split(
+        body_data = self.request.data
+        row_comparison = body_data.get('row_comparison', 'county')
+        col_dims = body_data.get('col_dims', 'keph_level__name').split(
             ',')
         if len(col_dims) > 5:
             raise ValidationError("Maximum 5 column dimensions allowed.")
-        metric = self.request.query_params.get('metric', 'number_of_facilities')
-        infrastructure_category = self.request.query_params.get('infrastructure_category', None)
-        service_category = self.request.query_params.get('service_category', None)
+        metric = body_data.get('metric', 'number_of_facilities')
+        infrastructure_category = body_data.get('infrastructure_category', None)
+        service_category = body_data.get('service_category', None)
+
 
         # Validate parameters
         if row_comparison not in self.row_comparison_options:
@@ -277,7 +279,7 @@ class FilterReportMixin(object):
             aggregations = base_queryset.values(row_name_field, *col_dims).annotate(total=Count('id'))
             for agg in aggregations:
                 row_value = agg[row_name_field] or 'Unknown'
-                col_values = [agg[...] or 'Unknown' for dim in col_dims]
+                col_values = [agg[dim] or 'Unknown' for dim in col_dims]
                 count = agg['total']
                 current = counts[row_value]
                 for i, value in enumerate(col_values[:-1]):
