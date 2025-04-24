@@ -1,3 +1,4 @@
+import datetime
 import itertools
 import functools
 from django.db.models import Q
@@ -106,14 +107,15 @@ class FilterReportMixin(object):
 
     def _get_matrix_report(self, filters={}):
         # Get query parameters
-        row_comparison = self.request.query_params.get('row_comparison', 'county')
-        col_dims = self.request.query_params.get('col_dims', 'facility_type__name,owner__name,keph_level__name').split(
+        body_data = self.request.data
+        row_comparison = body_data.get('row_comparison', 'county')
+        col_dims = body_data.get('col_dims', 'keph_level__name').split(
             ',')
         if len(col_dims) > 5:
             raise ValidationError("Maximum 5 column dimensions allowed.")
-        metric = self.request.query_params.get('metric', 'number_of_facilities')
-        infrastructure_category = self.request.query_params.get('infrastructure_category', None)
-        service_category = self.request.query_params.get('service_category', None)
+        metric = body_data.get('metric', 'number_of_facilities')
+        infrastructure_category = body_data.get('infrastructure_category', None)
+        service_category = body_data.get('service_category', None)
 
         # Validate parameters
         if row_comparison not in self.row_comparison_options:
@@ -363,7 +365,6 @@ class MatrixReportView(FilterReportMixin, APIView):
     def post(self, request, *args, **kwargs):
         # Get the JSON body content as a Python dict
         body_data = request.data
-        print(body_data.get('metric'))
         # Example: Accessing arrays/items in the body
         filters = body_data.get('filters', [])
         user_supplied_columns = body_data.get('col_dims', 'keph_level__name')
@@ -385,6 +386,7 @@ class MatrixReportView(FilterReportMixin, APIView):
 
         # get actual report
         data, totals = self.get_report_data()
+
         return Response(data={
             'columns_tree': parse_and_translate_col_dims(user_supplied_columns),
             'base_comparison': base_comparison,
