@@ -338,7 +338,7 @@ class FilterReportMixin(object):
             ]
         }
 
-        return data, totals
+        return data, totals, col_dims
 
     def get_report_data(self, *args, **kwargs):
         '''Route reports based on report_type param.'''
@@ -365,14 +365,26 @@ class MatrixReportView(FilterReportMixin, APIView):
         data, totals = self.get_report_data()
         return Response(data={
             'results': data,
-            'totals': totals
+            'totals': totals,
+            'columns_order': col_dims
         })
 
 
 class TestReportView(FilterReportMixin, APIView):
-    def get(self, *args, **kwargs):
-        data, totals = self.get_report_data()
+    def get(self, request, *args, **kwargs):
+        # Get the JSON body content as a Python dict
+        body_data = request.data
+
+        # Example: Accessing arrays/items in the body
+        filters = body_data.get('filters', [])
+        date_range = body_data.get('date_range', [])
+        col_dims = body_data.get('columns', [])
+
+        print(col_dims)
+        # get actual report
+        data, totals, col_dims = self.get_report_data()
         return Response(data={
+            'columns_tree': col_dims,
+            'totals': totals,
             'results': data,
-            'totals': totals
         })

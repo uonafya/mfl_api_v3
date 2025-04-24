@@ -19,4 +19,5 @@ djangorestframework-gis==1.0
 dj-rest-auth==5.0.2 
 drf-yasg==1.21.7
 drf-extensions==0.7.1
-psycopg2
+psycopg2==2.9.10
+shapely==2.0.7
