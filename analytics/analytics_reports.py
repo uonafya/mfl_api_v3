@@ -111,7 +111,6 @@ class FilterReportMixin(object):
             ',')
         if len(col_dims) > 5:
             raise ValidationError("Maximum 5 column dimensions allowed.")
-
         metric = self.request.query_params.get('metric', 'number_of_facilities')
         infrastructure_category = self.request.query_params.get('infrastructure_category', None)
         service_category = self.request.query_params.get('service_category', None)
@@ -342,7 +341,7 @@ class FilterReportMixin(object):
 
     def get_report_data(self, *args, **kwargs):
         '''Route reports based on report_type param.'''
-        report_type = self.request.query_params.get('report_type', 'facility_count_by_county')
+        report_type = self.request.query_params.get('report_type', 'matrix_report')
 
         # Matrix report
         if report_type == 'matrix_report':
@@ -361,15 +360,13 @@ class FilterReportMixin(object):
 
 
 class MatrixReportView(FilterReportMixin, APIView):
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         # Get the JSON body content as a Python dict
         body_data = request.data
-
+        print(body_data.get('metric'))
         # Example: Accessing arrays/items in the body
         filters = body_data.get('filters', [])
-        date_range = body_data.get('date_range', [])
-        user_supplied_columns = self.request.query_params.get('col_dims',
-                                                              'facility_type__name,owner__name,keph_level__name')
+        user_supplied_columns = body_data.get('col_dims', 'keph_level__name')
         base_comparison = self.request.query_params.get('row_comparison', 'county')
 
         COLUMN_LABELS = {
