@@ -338,7 +338,7 @@ class FilterReportMixin(object):
             ]
         }
 
-        return data, totals, col_dims
+        return data, totals
 
     def get_report_data(self, *args, **kwargs):
         '''Route reports based on report_type param.'''
@@ -361,16 +361,6 @@ class FilterReportMixin(object):
 
 
 class MatrixReportView(FilterReportMixin, APIView):
-    def get(self, *args, **kwargs):
-        data, totals = self.get_report_data()
-        return Response(data={
-            'results': data,
-            'totals': totals,
-            'columns_order': col_dims
-        })
-
-
-class TestReportView(FilterReportMixin, APIView):
     def get(self, request, *args, **kwargs):
         # Get the JSON body content as a Python dict
         body_data = request.data
@@ -378,13 +368,29 @@ class TestReportView(FilterReportMixin, APIView):
         # Example: Accessing arrays/items in the body
         filters = body_data.get('filters', [])
         date_range = body_data.get('date_range', [])
-        col_dims = body_data.get('columns', [])
+        user_supplied_columns = self.request.query_params.get('col_dims',
+                                                              'facility_type__name,owner__name,keph_level__name')
+        base_comparison = self.request.query_params.get('row_comparison', 'county')
 
-        print(col_dims)
+        COLUMN_LABELS = {
+            'facility_type__name': 'Facility Type',
+            'owner__name': 'Owner',
+            'keph_level__name': 'KEPH Level',
+            'regulatory_body__name': 'Regulatory Body',
+            'infrastructure': 'Infrastructure',
+            'services': 'Services',
+            'bed_types': 'Bed Types',
+        }
+
+        def parse_and_translate_col_dims(col_dims_param: str):
+            keys = col_dims_param.split(',')
+            return [COLUMN_LABELS.get(key, key.replace('_', ' ').title()) for key in keys]
+
         # get actual report
-        data, totals, col_dims = self.get_report_data()
+        data, totals = self.get_report_data()
         return Response(data={
-            'columns_tree': col_dims,
+            'columns_tree': parse_and_translate_col_dims(user_supplied_columns),
+            'base_comparison': base_comparison,
             'totals': totals,
             'results': data,
         })

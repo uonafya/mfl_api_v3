@@ -1,14 +1,14 @@
 from django.urls import path
 
 from .analytics_reports import (
-    TestReportView
+    MatrixReportView
 )
 
 app_name = "analytics"
 
 urlpatterns = (
     path('matrix-report/',
-         TestReportView.as_view(),
+         MatrixReportView.as_view(),
          name='matrix-report'),
 
 )
