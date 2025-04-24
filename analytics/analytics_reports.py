@@ -57,6 +57,19 @@ class FilterReportMixin(object):
         'services',
         'bed_types'
     ]
+    allowed_filters_keys = [
+        'period',
+        'counties',
+        'sub_counties',
+        'wards',
+        'facility_types',
+        'owners',
+        'keph_levels',
+        'regulatory_bodies',
+        'infrastructure_categories',
+        'services_categories',
+        'bed_types'
+    ]
     allowed_metrics = ['number_of_facilities']  # Add more metrics if needed
     bed_type_mapping = {
         'number_of_beds': 'beds',
@@ -68,6 +81,39 @@ class FilterReportMixin(object):
         'number_of_hdu_beds': 'hdu_beds',
         'number_of_inpatient_beds': 'inpatient_beds'
     }
+
+    def _apply_filters(self):
+        filters = Q()
+        filter_data = self.request.data.get('filters', {})  # Assuming you're using POST
+        for key in self.allowed_filters_keys:
+            values = filter_data.get(key)
+            if not values:
+                continue
+
+            if key == 'period':
+                start = values.get('start')
+                end = values.get('end')
+                if start and end:
+                    filters &= Q(created__range=[start, end])  # or `date_established__range`
+            else:
+                # Match the model fields
+                field_map = {
+                    'counties': 'ward__sub_county__county__id__in',
+                    'sub_counties': 'ward__sub_county__id__in',
+                    'wards': 'ward__id__in',
+                    'facility_types': 'facility_type__id__in',
+                    'owners': 'owner__id__in',
+                    'keph_levels': 'keph_level__id__in',
+                    'regulatory_bodies': 'regulatory_body__id__in',
+                    'infrastructure_categories': 'facilityinfrastructure__infrastructure__category__id__in',
+                    'services_categories': 'facilityservice__service__category__id__in',
+                    'bed_types': 'id__in',  # will require custom handling
+                }
+
+                if key in field_map:
+                    filters &= Q(**{field_map[key]: values})
+
+        self.queryset = self.queryset.filter(filters).distinct()
 
     def _prepare_filters(self, filtering_data):
         filtering_data = filtering_data.split('=')
@@ -105,15 +151,17 @@ class FilterReportMixin(object):
         return data
 
     def _get_matrix_report(self, filters={}):
-        # Get query parameters
-        row_comparison = self.request.query_params.get('row_comparison', 'county')
-        col_dims = self.request.query_params.get('col_dims', 'facility_type__name,owner__name,keph_level__name').split(
+        self._apply_filters()
+        # Get query body
+        body_data = self.request.data
+        row_comparison = body_data.get('row_comparison', 'county')
+        col_dims = body_data.get('col_dims', 'keph_level__name').split(
             ',')
         if len(col_dims) > 5:
             raise ValidationError("Maximum 5 column dimensions allowed.")
-        metric = self.request.query_params.get('metric', 'number_of_facilities')
-        infrastructure_category = self.request.query_params.get('infrastructure_category', None)
-        service_category = self.request.query_params.get('service_category', None)
+        metric = body_data.get('metric', 'number_of_facilities')
+        infrastructure_category = body_data.get('infrastructure_category', None)
+        service_category = body_data.get('service_category', None)
 
         # Validate parameters
         if row_comparison not in self.row_comparison_options:
@@ -277,7 +325,8 @@ class FilterReportMixin(object):
             aggregations = base_queryset.values(row_name_field, *col_dims).annotate(total=Count('id'))
             for agg in aggregations:
                 row_value = agg[row_name_field] or 'Unknown'
-                col_values = [agg[...] or 'Unknown' for dim in col_dims]
+                # col_values = [agg[...] or 'Unknown' for dim in col_dims]
+                col_values = [agg.get(dim, 'Unknown') for dim in col_dims]
                 count = agg['total']
                 current = counts[row_value]
                 for i, value in enumerate(col_values[:-1]):
@@ -363,11 +412,9 @@ class MatrixReportView(FilterReportMixin, APIView):
     def post(self, request, *args, **kwargs):
         # Get the JSON body content as a Python dict
         body_data = request.data
-        print(body_data.get('metric'))
-        # Example: Accessing arrays/items in the body
         filters = body_data.get('filters', [])
         user_supplied_columns = body_data.get('col_dims', 'keph_level__name')
-        base_comparison = self.request.query_params.get('row_comparison', 'county')
+        base_comparison = body_data.get('row_comparison', 'county')
 
         COLUMN_LABELS = {
             'facility_type__name': 'Facility Type',
@@ -388,6 +435,6 @@ class MatrixReportView(FilterReportMixin, APIView):
         return Response(data={
             'columns_tree': parse_and_translate_col_dims(user_supplied_columns),
             'base_comparison': base_comparison,
-            'totals': totals,
+            # 'totals': totals,
             'results': data,
         })
