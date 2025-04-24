@@ -481,6 +481,7 @@ class DrillBorderBase(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
+
         return views.Response({
             "meta": self._get_meta() if hasattr(self, "_get_meta") else {},
             "geojson": serializer.data
