@@ -109,6 +109,9 @@ class FilterReportMixin(object):
         row_comparison = self.request.query_params.get('row_comparison', 'county')
         col_dims = self.request.query_params.get('col_dims', 'facility_type__name,owner__name,keph_level__name').split(
             ',')
+        if len(col_dims) > 5:
+            raise ValidationError("Maximum 5 column dimensions allowed.")
+
         metric = self.request.query_params.get('metric', 'number_of_facilities')
         infrastructure_category = self.request.query_params.get('infrastructure_category', None)
         service_category = self.request.query_params.get('service_category', None)
@@ -144,7 +147,7 @@ class FilterReportMixin(object):
                     qs = qs.filter(infrastructure__category__id=infrastructure_category)
                 col_field = 'infrastructure__category__name'
                 col_values = qs.values(col_field).distinct().order_by(col_field)
-                headers.append([v[col_field] for v in col_values])
+                headers.append([v[col_field] or 'Unknown' for v in col_values if v[col_field] is not None])
                 col_fields.append(col_field)
             elif dim == 'services':
                 qs = FacilityService.objects.filter(
@@ -154,7 +157,7 @@ class FilterReportMixin(object):
                     qs = qs.filter(service__category__id=service_category)
                 col_field = 'service__category__name'
                 col_values = qs.values(col_field).distinct().order_by(col_field)
-                headers.append([v[col_field] for v in col_values])
+                headers.append([v[col_field] or 'Unknown' for v in col_values if v[col_field] is not None])
                 col_fields.append(col_field)
             elif dim == 'bed_types':
                 bed_types = list(self.bed_type_mapping.values())
@@ -162,12 +165,26 @@ class FilterReportMixin(object):
                 col_field = 'bed_type_label'
                 col_fields.append(col_field)
             else:
+                # For regular dimensions, use FacilityInfrastructure for consistency if infrastructure is included
+                if 'infrastructure' in col_dims:
+                    qs = FacilityInfrastructure.objects.filter(
+                        facility__in=base_queryset
+                    ).values('facility__' + dim).distinct().order_by('facility__' + dim)
+                    headers.append(
+                        [v['facility__' + dim] or 'Unknown' for v in qs if v['facility__' + dim] is not None])
+                else:
+                    qs = base_queryset.values(dim).distinct().order_by(dim)
+                    headers.append([v[dim] or 'Unknown' for v in qs if v[dim] is not None])
                 col_fields.append(dim)
-                col_values = base_queryset.values(dim).distinct().order_by(dim)
-                headers.append([v[dim] for v in col_values])
 
         # Aggregate data
-        counts = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
+        # Initialize counts with enough nesting levels
+        def create_nested_defaultdict(levels):
+            if levels <= 1:
+                return defaultdict(dict)
+            return defaultdict(lambda: create_nested_defaultdict(levels - 1))
+
+        counts = create_nested_defaultdict(len(col_dims))
 
         if 'infrastructure' in col_dims or 'services' in col_dims:
             if 'infrastructure' in col_dims:
@@ -261,7 +278,7 @@ class FilterReportMixin(object):
             aggregations = base_queryset.values(row_name_field, *col_dims).annotate(total=Count('id'))
             for agg in aggregations:
                 row_value = agg[row_name_field] or 'Unknown'
-                col_values = [agg[dim] or 'Unknown' for dim in col_dims]
+                col_values = [agg[...] or 'Unknown' for dim in col_dims]
                 count = agg['total']
                 current = counts[row_value]
                 for i, value in enumerate(col_values[:-1]):
@@ -307,7 +324,7 @@ class FilterReportMixin(object):
             ],
             'columns': [
                 {
-                    'key': '_'.join(c),
+                    'key': '_'.join(str(v) for v in c),
                     'total': sum(
                         functools.reduce(
                             lambda d, k: d.get(k, {}) if isinstance(d, dict) else 0,

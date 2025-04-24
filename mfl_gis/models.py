@@ -1,4 +1,6 @@
 import logging
+from shapely.geometry import shape, mapping
+from shapely.ops import unary_union
 import json
 import reversion
 
@@ -10,7 +12,6 @@ from django.utils import timezone, encoding
 from rest_framework.exceptions import ValidationError
 from common.models import AbstractBase, County, Constituency, Ward
 from facilities.models import Facility
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -68,7 +69,6 @@ class CoordinatesValidatorMixin(object):
 
 
 class CustomGeoManager(gis_models.Manager):
-
     """
     Ensure that deleted items are not returned in a gis queryset  by default
     """
@@ -79,7 +79,6 @@ class CustomGeoManager(gis_models.Manager):
 
 
 class GISAbstractBase(AbstractBase, gis_models.Model):
-
     """
     We've intentionally duplicated the `AbstractBase` in the `common` app
     because we wanted to confine the impact of GIS ( Geographic ) stuff
@@ -101,7 +100,6 @@ class GISAbstractBase(AbstractBase, gis_models.Model):
 @reversion.register
 # @encoding.python_2_unicode_compatible
 class GeoCodeSource(GISAbstractBase):
-
     """
     Where the geo-code came from.
 
@@ -129,7 +127,6 @@ class GeoCodeSource(GISAbstractBase):
 @reversion.register
 # @encoding.python_2_unicode_compatible
 class GeoCodeMethod(GISAbstractBase):
-
     """
     Method used to capture the geo-code.
 
@@ -155,7 +152,6 @@ class GeoCodeMethod(GISAbstractBase):
 @reversion.register(follow=['facility', 'source', 'method', ])
 # @encoding.python_2_unicode_compatible
 class FacilityCoordinates(CoordinatesValidatorMixin, GISAbstractBase):
-
     """
     Location derived by the use of GPS satellites and GPS device or receivers.
 
@@ -174,7 +170,7 @@ class FacilityCoordinates(CoordinatesValidatorMixin, GISAbstractBase):
     method = gis_models.ForeignKey(
         GeoCodeMethod, null=True, blank=True, on_delete=gis_models.PROTECT,
         help_text="Method used to obtain the geo codes. e.g"
-        " taken with GPS device")
+                  " taken with GPS device")
     collection_date = gis_models.DateTimeField(default=timezone.now)
 
     @property
@@ -185,13 +181,14 @@ class FacilityCoordinates(CoordinatesValidatorMixin, GISAbstractBase):
                 float('%.2f' % round(self.coordinates[1], 2))
             ]
         }
+
     def validate_coordinates_decimal_places_at_least_six(self):
         if (len(str(self.coordinates[0])) < 7 or
                 len(str(self.coordinates[1])) < 7):
             raise ValidationError({
                 "coordinates":
                     ["Please provide at-least 6 decimal places number. "]
-                })
+            })
 
     @property
     def json_features(self):
@@ -205,24 +202,23 @@ class FacilityCoordinates(CoordinatesValidatorMixin, GISAbstractBase):
 
         areas_passed = 0
         if self.validate_long_and_lat_within_county(
-            self.facility.ward.constituency.county):
+                self.facility.ward.constituency.county):
             areas_passed += 1
 
-
         if self.validate_long_and_lat_within_constituency(
-            self.facility.ward.constituency):
+                self.facility.ward.constituency):
             areas_passed += 1
 
         if self.validate_long_and_lat_within_ward(
-            self.facility.ward):
+                self.facility.ward):
             areas_passed += 1
 
         if areas_passed < 2:
             raise ValidationError({
-                    "coordinates": [
-                        "The coordinates did not validate"
-                    ]
-                })
+                "coordinates": [
+                    "The coordinates did not validate"
+                ]
+            })
 
         super(FacilityCoordinates, self).clean()
 
@@ -235,7 +231,6 @@ class FacilityCoordinates(CoordinatesValidatorMixin, GISAbstractBase):
 
 
 class AdministrativeUnitBoundary(GISAbstractBase):
-
     """Base class for the models that implement administrative boundaries
 
     All common operations and fields are here.
@@ -295,31 +290,22 @@ class AdministrativeUnitBoundary(GISAbstractBase):
 
     @property
     def geometry(self):
-        """Reduce the precision of the geometries sent in list views
+        """Reduce the precision of the geometries sent in list views.
 
-        This produces a MASSIVE saving in rendering time
+        This produces a MASSIVE saving in rendering time.
         """
         if not self.mpoly:
-            return self.mpoly
+            return None
 
         def _simplify(tolerance, geometry):
-            if isinstance(geometry, MultiPolygon):
-                polygon = None
-                for child_polygon in geometry:
-                    if polygon:
-                        polygon.extend(child_polygon)
-                    else:
-                        polygon = child_polygon
-            else:
-                polygon = geometry
+            # Convert GEOSGeometry MultiPolygon to list of Shapely Polygons
+            shapely_polygons = [shape(json.loads(geom.geojson)) for geom in geometry]
+            # Merge using unary_union
+            unioned = unary_union(shapely_polygons)
+            # Simplify and return GeoJSON
+            return mapping(unioned.simplify(tolerance=tolerance))
 
-            return json.loads(
-                polygon.simplify(tolerance=tolerance).geojson
-            )
-
-        geojson_dict = _simplify(
-            tolerance=self.TOLERANCE, geometry=self.mpoly.cascaded_union
-        )
+        geojson_dict = _simplify(tolerance=self.TOLERANCE, geometry=self.mpoly)
         original_coordinates = geojson_dict['coordinates']
         assert original_coordinates
         new_coordinates = [
@@ -330,8 +316,8 @@ class AdministrativeUnitBoundary(GISAbstractBase):
                 ]
                 for coordinate_pair in original_coordinates[0]
                 if coordinate_pair and
-                isinstance(coordinate_pair[0], float) and
-                isinstance(coordinate_pair[1], float)
+                   isinstance(coordinate_pair[0], float) and
+                   isinstance(coordinate_pair[1], float)
             ]
         ]
         geojson_dict['coordinates'] = new_coordinates
@@ -344,7 +330,6 @@ class AdministrativeUnitBoundary(GISAbstractBase):
 @reversion.register
 # @encoding.python_2_unicode_compatible
 class WorldBorder(AdministrativeUnitBoundary):
-
     """World boundaries
 
     Source: http://thematicmapping.org/downloads/TM_WORLD_BORDERS-0.3.zip
