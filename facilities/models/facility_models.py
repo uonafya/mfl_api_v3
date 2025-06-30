@@ -1052,6 +1052,40 @@ class FacilityExportExcelMaterialView(models.Model):
     long = models.CharField(max_length=30, null=True, blank=True)
     lat = models.CharField(max_length=30, null=True, blank=True)
     approved_national_level = models.BooleanField(default=False)
+
+    @property
+    def in_complete_details(self):
+        """
+        Check whether  a facility has all the details filled in:
+            1. Coordinates
+            2. Contacts and officers
+            3. Services
+
+        This will be used to determine if the facility should have an MFL Code.
+        The incomplete facilities should not have MFL codes
+        """
+        in_complete_data = []
+        if not self.coordinates:
+            in_complete_data.append('coordinates')
+
+        if len(self.facility_contacts.all()) == 0:
+            in_complete_data.append('contacts')
+
+        if len(self.facility_services.all()) == 0:
+            in_complete_data.append('services')
+
+        if len(self.facility_infrastructure.all()) == 0:
+            in_complete_data.append('infrastructure')
+
+
+        if len(self.facility_specialists.all()) == 0:
+            in_complete_data.append('humanresources')
+
+        return ", ".join(in_complete_data)
+
+    @property
+    def is_complete(self):
+        return self.in_complete_details == ""
    
     class Meta(object):
         managed = False

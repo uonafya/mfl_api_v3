@@ -111,6 +111,8 @@ class FacilityExportExcelMaterialViewSerializer(serializers.ModelSerializer):
             "created",
             "closed",
             "is_published",
+            "in_complete_details",
+            "is_complete"
             "id",
             "lat",
             "long",
