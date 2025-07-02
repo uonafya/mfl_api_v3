@@ -273,7 +273,7 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
             )
 
             return chu
-        
+
         except ChuUpdateBuffer.DoesNotExist:
             return None
 
@@ -333,7 +333,7 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
 
         if facility_dhis_id is not None:
             if unit_uuid_status[1] == 'retrieved':
-                
+
                 r = requests.put(
                     settings.DHIS_ENDPOINT + "api/organisationUnits/" + new_chu_payload.pop('id'),
                     auth=(settings.DHIS_USERNAME, settings.DHIS_PASSWORD),
@@ -342,12 +342,12 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
                     },
                     json=new_chu_payload
                 )
-                
+
                 LOGGER.info("[DEBUG] Response(retrived): {}".format(r.text))
 
-                
+
             else:
-                
+
                 r = requests.post(
                     settings.DHIS_ENDPOINT + "api/organisationUnits",
                     auth=(settings.DHIS_USERNAME, settings.DHIS_PASSWORD),
@@ -360,7 +360,7 @@ class CommunityHealthUnit(SequenceMixin, AbstractBase):
                 LOGGER.info("[DEBUG] Response(generated): {}".format(r.text))
 
 
-               
+
                 if r.json()["status"] != "OK":
                     LOGGER.error("[DEBUG]: Repsonse(error):{}".format(r.text))
 
@@ -563,7 +563,7 @@ class ChuUpdateBuffer(AbstractBase):
                 'facility').get('facility_id')
             basic_details.pop('facility')
 
-        
+
         for key, value in basic_details.iteritems():
             if key is not "basic":
                 setattr(self.health_unit, key, value)
@@ -586,6 +586,9 @@ class ChuUpdateBuffer(AbstractBase):
             chew['updated_by_id'] = self.updated_by_id
             chew.pop('created_by', None)
             chew.pop('updated_by', None)
+
+            if hasattr(chew, 'name'):
+                chew.pop('name', None)
 
             if hasattr(chew, 'id'):
                 chew_obj = CommunityHealthWorker.objects.get(
@@ -661,7 +664,7 @@ class ChuUpdateBuffer(AbstractBase):
             updates['services'] = json.loads(self.services)
         updates['updated_by'] = self.updated_by.get_full_name
         return updates
-    
+
 
     def clean(self, *args, **kwargs):
         if not self.is_approved and not self.is_rejected:
