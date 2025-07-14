@@ -111,8 +111,8 @@ class FacilityExportExcelMaterialViewSerializer(serializers.ModelSerializer):
             "created",
             "closed",
             "is_published",
-            "in_complete_details",
-            "is_complete"
+            # "in_complete_details",
+            # "is_complete"
             "id",
             "lat",
             "long",
@@ -704,7 +704,7 @@ class FacilityDetailSerializer(FacilitySerializer):
     # infrastructure = serializers.ReadOnlyField(
     #     source="get_facility_infrastructure")
     officer_in_charge = serializers.ReadOnlyField()
-    keph_level_name = serializers.ReadOnlyField(source='keph_level.name')   
+    keph_level_name = serializers.ReadOnlyField(source='keph_level.name')
 
     class Meta(object):
         model = Facility
@@ -843,4 +843,3 @@ class FacilityDetailSerializer(FacilitySerializer):
         if self.inlining_errors:
             raise ValidationError(self.inlining_errors)
         return instance
-

@@ -135,7 +135,7 @@ class DhisAuth(ApiAuthentication):
                 "paging": "false"
             }
         )
-    
+
         if len(r.json()["organisationUnits"]) is 1 and "id" in r.json()["organisationUnits"][0]:
             return [r.json()["organisationUnits"][0]["id"], 'retrieved']
         else:
@@ -203,9 +203,9 @@ class DhisAuth(ApiAuthentication):
                 },
                 json=new_facility_payload
             )
-            
+
             if r.json()["status"] != "OK":
-                
+
                 raise ValidationError(
                     {
                         "Error!": [
@@ -217,7 +217,7 @@ class DhisAuth(ApiAuthentication):
         else:
             # LOGGER.error("new_facility_payload:{}".format(new_facility_payload['id']))
             # raise ValueError("new_facility_payload:{}".format(new_facility_payload))
-        
+
             facility = requests.get(
                 settings.DHIS_ENDPOINT + "api/organisationUnits/" + new_facility_payload['id'],
                 auth=(settings.DHIS_USERNAME, settings.DHIS_PASSWORD),
@@ -237,16 +237,16 @@ class DhisAuth(ApiAuthentication):
                     },
                     json=new_facility_payload
                 )
-                
+
 
                 if r.json()["status"] != "OK":
-                    
+
                     raise ValidationError(
                         {
                             "Error!": ["An error occured while updating this facility in KHIS Aggregate. KHIS Error {}".format(r.text)]
                         }
                     )
-        
+
 
     def push_facility_metadata(self, metadata_payload, facility_uid):
         # Keph Level
@@ -1053,40 +1053,40 @@ class FacilityExportExcelMaterialView(models.Model):
     lat = models.CharField(max_length=30, null=True, blank=True)
     approved_national_level = models.BooleanField(default=False)
 
-    @property
-    def in_complete_details(self):
-        """
-        Check whether  a facility has all the details filled in:
-            1. Coordinates
-            2. Contacts and officers
-            3. Services
+    # @property
+    # def in_complete_details(self):
+    #     """
+    #     Check whether  a facility has all the details filled in:
+    #         1. Coordinates
+    #         2. Contacts and officers
+    #         3. Services
 
-        This will be used to determine if the facility should have an MFL Code.
-        The incomplete facilities should not have MFL codes
-        """
-        in_complete_data = []
-        if not self.coordinates:
-            in_complete_data.append('coordinates')
+    #     This will be used to determine if the facility should have an MFL Code.
+    #     The incomplete facilities should not have MFL codes
+    #     """
+    #     in_complete_data = []
+    #     if not self.coordinates:
+    #         in_complete_data.append('coordinates')
 
-        if len(self.facility_contacts.all()) == 0:
-            in_complete_data.append('contacts')
+    #     if len(self.facility_contacts.all()) == 0:
+    #         in_complete_data.append('contacts')
 
-        if len(self.facility_services.all()) == 0:
-            in_complete_data.append('services')
+    #     if len(self.facility_services.all()) == 0:
+    #         in_complete_data.append('services')
 
-        if len(self.facility_infrastructure.all()) == 0:
-            in_complete_data.append('infrastructure')
+    #     if len(self.facility_infrastructure.all()) == 0:
+    #         in_complete_data.append('infrastructure')
 
 
-        if len(self.facility_specialists.all()) == 0:
-            in_complete_data.append('humanresources')
+    #     if len(self.facility_specialists.all()) == 0:
+    #         in_complete_data.append('humanresources')
 
-        return ", ".join(in_complete_data)
+    #     return ", ".join(in_complete_data)
 
-    @property
-    def is_complete(self):
-        return self.in_complete_details == ""
-   
+    # @property
+    # def is_complete(self):
+    #     return self.in_complete_details == ""
+
     class Meta(object):
         managed = False
         ordering = ('-created', )
@@ -1162,7 +1162,7 @@ class Facility(SequenceMixin, AbstractBase):
     number_of_general_theatres = models.PositiveIntegerField(
         default=0,
         help_text="The number of general theatres "
-        " that a facility has e.g 0")  
+        " that a facility has e.g 0")
     number_of_maternity_theatres = models.PositiveIntegerField(
         default=0,
         help_text="The number of maternity theatres "
@@ -1178,7 +1178,7 @@ class Facility(SequenceMixin, AbstractBase):
                   " that a facility has e.g 0")
     new_born_unit = models.BooleanField(default=False)
 
-    out_reach_services = models.BooleanField(default=False)  
+    out_reach_services = models.BooleanField(default=False)
 
     open_whole_day = models.BooleanField(
         default=False,
@@ -1400,7 +1400,7 @@ class Facility(SequenceMixin, AbstractBase):
                 "6cb92834-107c-404a-91fa-cf60b1eb5333": "aRxa6o8GqZN",
                 "2e651780-2ed4-4f8c-9061-6e5acf95d581": "AaAF5EmS1fk",
                 "30af7e3f-cd52-4ca0-b5dc-d8b1040a9808": "AaAF5EmS1fk",
-                "d64bbd8a-4013-463b-a238-c346cee66a92": "AaAF5EmS1fk", 
+                "d64bbd8a-4013-463b-a238-c346cee66a92": "AaAF5EmS1fk",
 
             }
             kmhfl_dhis2_keph_mapping = {
@@ -1438,11 +1438,11 @@ class Facility(SequenceMixin, AbstractBase):
 
             new_facility = True
 
-            
+
             # LOGGER.error("[DEBUG] dhis2_org_unit_id[1]{}:".format(dhis2_org_unit_id[1]))
-    
+
             # raise ValueError("[DEBUG] dhis2_org_unit_id[1]{}:".format(dhis2_org_unit_id[1]))
-        
+
 
             if dhis2_org_unit_id[1] == 'retrieved':
                 new_facility = False
@@ -1602,7 +1602,7 @@ class Facility(SequenceMixin, AbstractBase):
     @property
     def operation_status_name(self):
         return self.operation_status.name
-    
+
     @property
     def admission_status_name(self):
         return self.admission_status.name
@@ -1676,7 +1676,7 @@ class Facility(SequenceMixin, AbstractBase):
     @property
     def get_facility_contacts(self):
         """For the same purpose as the get_facility_services above"""
-      
+
         contacts = self.facility_contacts.all()
 
         return [
@@ -2329,16 +2329,16 @@ class FacilityUpdates(AbstractBase):
 
             dhis2_parent_id = self.dhis2_api_auth.get_parent_id(self.facility.ward.code)
             dhis2_org_unit_id = self.dhis2_api_auth.get_org_unit_id(self.facility.code)
-            
-            
-        
+
+
+
             coordinates = self.dhis2_api_auth.format_coordinates(
                     re.search(r'\((.*?)\)', str(FacilityCoordinates.objects.values('coordinates')
                                                 .get(facility_id=self.facility.id)['coordinates'])).group(1))
-            
+
             # LOGGER.error('[>>>>>Info] coordinates: {}, FacilityCoordinatesObj: {}'.format(coordinates, FacilityCoordinates.objects.values('coordinates')
             #                                     .get(facility_id=self.facility.id)['coordinates']))
-            
+
             new_facility_updates_payload = {
                 "id": dhis2_org_unit_id[0],
                 "code": str(self.facility.code),
@@ -2356,13 +2356,13 @@ class FacilityUpdates(AbstractBase):
             #
 
             # LOGGER.error("[DEBUG] dhis2_org_unit_id[1]{}:".format(dhis2_org_unit_id[1]))
-    
+
             # raise ValueError("[DEBUG] dhis2_org_unit_id[1]{}:".format(dhis2_org_unit_id[1]))
 
             print("New Facility Push Payload => ", new_facility_updates_payload)
 
             # LOGGER.error("[DEBUG] dhis2_org_unit_id[1]{}:".format(dhis2_org_unit_id[1]))
-    
+
             # raise ValueError("[DEBUG] dhis2_org_unit_id[1]{}:".format(dhis2_org_unit_id[1]))
 
             new_facility = False if dhis2_org_unit_id[1] == 'retrieved' else True
@@ -3045,8 +3045,8 @@ class FacilitySpecialist(AbstractBase):
 
 
     count = models.IntegerField(
-        default=0, 
-        blank=True, 
+        default=0,
+        blank=True,
         help_text='The actual number of specialists for this speciality.')
 
     @property
@@ -3163,17 +3163,17 @@ class FacilityInfrastructure(AbstractBase):
     infrastructure = models.ForeignKey(
         Infrastructure,
 
-        related_name='infrastructure', 
+        related_name='infrastructure',
         on_delete=models.PROTECT)
 
 
     count = models.IntegerField(
-        default=0, 
-        blank=True, 
+        default=0,
+        blank=True,
         help_text='The actual number of infrastructure items in a facility.')
 
     present = models.BooleanField(
-        default=False, 
+        default=False,
         help_text='True if the listed infrastructure is present.')
 
     @property
