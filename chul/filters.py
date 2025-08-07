@@ -86,6 +86,7 @@ class CommunityHealthUnitFilter(CommonFieldsFilterset):
         name='facility__ward__constituency__county')
     sub_county = ListCharFilter(
         name='facility__ward__sub_county')
+    facility_code = django_filters.UUIDFilter(name="facility_code")
 
     is_approved = django_filters.TypedChoiceFilter(
         choices=BOOLEAN_CHOICES, coerce=strtobool
