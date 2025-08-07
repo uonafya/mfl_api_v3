@@ -72,6 +72,7 @@ class CommunityHealthUnitSerializer(
     status_name = serializers.ReadOnlyField(source="status.name")
     health_unit_workers = serializers.ReadOnlyField(source='workers')
     facility_name = serializers.ReadOnlyField(source='facility.name')
+    facility_code = serializers.ReadOnlyField(source='facility.code')
     facility_ward = serializers.ReadOnlyField(source='facility.ward.name')
     facility_constituency = serializers.ReadOnlyField(
         source='facility.ward.constituency.name')
@@ -127,11 +128,11 @@ class CommunityHealthUnitSerializer(
                 health_unit=chu_instance,
                 is_approved=False, is_rejected=False)[0] if len(ChuUpdateBuffer.objects.filter(
                 health_unit=chu_instance,
-                is_approved=False, is_rejected=False)) > 1 else None 
-            
+                is_approved=False, is_rejected=False)) > 1 else None
+
             if update is None:
                  raise ChuUpdateBuffer.DoesNotExist
-            
+
         except ChuUpdateBuffer.DoesNotExist:
             update = ChuUpdateBuffer.objects.create(
                 health_unit=chu_instance,
@@ -185,12 +186,12 @@ class CommunityHealthUnitSerializer(
     #         chu_updates = ChuUpdateBuffer.objects.filter(
     #             health_unit=chu_instance,
     #             is_approved=False, is_rejected=False)
-            
+
     #         update = chu_updates[0] if chu_updates.__len__() > 0 else None
 
     #         if update is None:
     #             raise ChuUpdateBuffer.DoesNotExist
-            
+
     #     except ChuUpdateBuffer.DoesNotExist:
     #         update = ChuUpdateBuffer.objects.create(
     #             health_unit=chu_instance,
@@ -257,7 +258,7 @@ class CommunityHealthUnitSerializer(
                 chew_obj.last_name = chew['last_name']
                 chew_obj.is_incharge = chew['is_incharge']
                 chew_obj.mobile_no = chew['mobile_no']
-                chew_obj.email = chew['email'] 
+                chew_obj.email = chew['email']
                 chew_obj.save()
             else:
                 chew['health_unit'] = instance.id
