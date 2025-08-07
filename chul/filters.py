@@ -68,7 +68,7 @@ class CommunityHealthUnitFilter(CommonFieldsFilterset):
                 Q(is_approved=None, is_rejected=False, has_edits=False) |
                 Q(is_approved=None, is_rejected=True, has_edits=False)
             )
-        
+
     # def chu_approved(self, qs, name, value):
     #     if value in TRUTH_NESS:
     #         return qs.filter(
