@@ -295,7 +295,7 @@ class CreateFacilityOfficerMixin(object):
                         contact_dict = self._inject_creating_user(contact_dict)
                         contact_dict = self._inject_creating_user(contact_dict)
                         created_contacts.append(Contact.objects.create(**contact_dict))
-            
+
             return created_contacts
 
     def _create_facility_officer(self, data):
@@ -332,17 +332,17 @@ class CreateFacilityOfficerMixin(object):
 
         # link the officer to the contacts
         created_contacts = self._create_contacts(data)
-        for contact in created_contacts:
-            contact_dict = {
-                "officer": officer,
-                "contact": contact
-            }
-            try:
-                OfficerContact.objects.get(**contact_dict)
-            except OfficerContact.DoesNotExist:
-                contact_dict = self._inject_creating_user(contact_dict)
-
-                OfficerContact.objects.create(**contact_dict)
+        if created_contacts is not None:
+            for contact in created_contacts:
+                contact_dict = {
+                    "officer": officer,
+                    "contact": contact
+                }
+                try:
+                    OfficerContact.objects.get(**contact_dict)
+                except OfficerContact.DoesNotExist:
+                    contact_dict = self._inject_creating_user(contact_dict)
+                    OfficerContact.objects.create(**contact_dict)
         return facility_officer
 
     def create_officer(self, data):
