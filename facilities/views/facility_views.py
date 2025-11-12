@@ -957,7 +957,7 @@ class FacilityOfficerListView(LoginRequiredMixin, generics.ListCreateAPIView):
 
 
 class FacilityOfficerDetailView(
-    AuditableDetailViewMixin, CustomRetrieveUpdateDestroyView
+    LoginRequiredMixin, AuditableDetailViewMixin, CustomRetrieveUpdateDestroyView
 ):
     serializer_class = FacilityOfficerSerializer
     queryset = FacilityOfficer.objects.all()
