@@ -949,7 +949,7 @@ class FacilityContactDetailView(
     serializer_class = FacilityContactSerializer
 
 
-class FacilityOfficerListView(generics.ListCreateAPIView):
+class FacilityOfficerListView(LoginRequiredMixin, generics.ListCreateAPIView):
     serializer_class = FacilityOfficerSerializer
     queryset = FacilityOfficer.objects.all()
     filter_class = FacilityOfficerFilter
@@ -957,7 +957,7 @@ class FacilityOfficerListView(generics.ListCreateAPIView):
 
 
 class FacilityOfficerDetailView(
-    AuditableDetailViewMixin, CustomRetrieveUpdateDestroyView, LoginRequiredMixin
+    AuditableDetailViewMixin, CustomRetrieveUpdateDestroyView
 ):
     serializer_class = FacilityOfficerSerializer
     queryset = FacilityOfficer.objects.all()
