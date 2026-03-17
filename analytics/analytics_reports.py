@@ -69,6 +69,19 @@ class FilterReportMixin(object):
         'number_of_hdu_beds': 'hdu_beds',
         'number_of_inpatient_beds': 'inpatient_beds'
     }
+    allowed_filters_keys = [
+        'period',
+        'counties',
+        'sub_counties',
+        'wards',
+        'facility_types',
+        'owners',
+        'keph_levels',
+        'regulatory_bodies',
+        'infrastructure_categories',
+        'services_categories',
+        'bed_types'
+    ]
 
     def _prepare_filters(self, filtering_data):
         filtering_data = filtering_data.split('=')
@@ -105,8 +118,43 @@ class FilterReportMixin(object):
             })
         return data
 
-    def _get_matrix_report(self, filters={}):
+    def _apply_filters(self):
+        filters = Q()
+        filter_data = self.request.data.get('filters', {})  # Assuming you're using POST
+        for key in self.allowed_filters_keys:
+            values = filter_data.get(key)
+            if not values:
+                continue
+
+            if key == 'period':
+                start = values.get('startdate')
+                end = values.get('enddate')
+                if start and end:
+                    filters &= Q(created__range=[start, end])  # or `date_established__range`
+            else:
+                # Match the model fields
+                field_map = {
+                    'counties': 'ward__sub_county__county__id__in',
+                    'sub_counties': 'ward__sub_county__id__in',
+                    'wards': 'ward__id__in',
+                    'facility_types': 'facility_type__id__in',
+                    'owners': 'owner__id__in',
+                    'keph_levels': 'keph_level__id__in',
+                    'regulatory_bodies': 'regulatory_body__id__in',
+                    'infrastructure_categories': 'facilityinfrastructure__infrastructure__category__id__in',
+                    'services_categories': 'facilityservice__service__category__id__in',
+                    'bed_types': 'id__in',  # will require custom handling
+                }
+
+                if key in field_map:
+                    filters &= Q(**{field_map[key]: values})
+        print(filters)
+        self.queryset = self.queryset.filter(filters)
+        print(self.queryset.count())
+
+    def _get_matrix_report(self):
         # Get query parameters
+        self._apply_filters()
         body_data = self.request.data
         row_comparison = body_data.get('row_comparison', 'county')
         col_dims = body_data.get('col_dims', 'keph_level__name').split(
@@ -131,11 +179,11 @@ class FilterReportMixin(object):
         row_id_field = row_config['id_field']
 
         # Initialize queryset
-        base_queryset = self.queryset.filter(**filters).select_related(
+        base_queryset = self.queryset.select_related(
             'facility_type', 'owner', 'keph_level', 'regulatory_body',
             'ward__sub_county__county'
         )
-
+        print(base_queryset.count())
         # Prepare column dimensions and querysets
         col_fields = []
         headers = []
@@ -355,7 +403,7 @@ class FilterReportMixin(object):
                     raise ValidationError(
                         f"Invalid row_comparison. Choose from {list(self.row_comparison_options.keys())}")
                 filters[self.row_comparison_options[row_comparison]['filter_field']] = county_id
-            return self._get_matrix_report(filters=filters)
+            return self._get_matrix_report()
 
         # Placeholder for other report types
         raise NotFound(detail='Report not found.')
@@ -368,7 +416,7 @@ class MatrixReportView(FilterReportMixin, APIView):
         # Example: Accessing arrays/items in the body
         filters = body_data.get('filters', [])
         user_supplied_columns = body_data.get('col_dims', 'keph_level__name')
-        base_comparison = self.request.query_params.get('row_comparison', 'county')
+        base_comparison = body_data.get('row_comparison', 'county')
 
         COLUMN_LABELS = {
             'facility_type__name': 'Facility Type',
@@ -388,8 +436,8 @@ class MatrixReportView(FilterReportMixin, APIView):
         data, totals = self.get_report_data()
 
         return Response(data={
-            'columns_tree': parse_and_translate_col_dims(user_supplied_columns),
-            'base_comparison': base_comparison,
-            'totals': totals,
+            # 'columns_tree': parse_and_translate_col_dims(user_supplied_columns),
+            # 'base_comparison': base_comparison,
+            # 'totals': totals,
             'results': data,
         })
