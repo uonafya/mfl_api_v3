@@ -623,8 +623,8 @@ class ChuUpdateBuffer(AbstractBase):
             chew.pop("created_by", None)
             chew.pop("updated_by", None)
 
-            if hasattr(chew, "name") or "name" in chew:
-                chew.pop("name", None)
+            # if hasattr(chew, "name") or "name" in chew:
+            # chew.pop("name", None)
 
             if hasattr(chew, "id"):
                 chew_obj = CommunityHealthWorker.objects.get(id=chew["id"])
